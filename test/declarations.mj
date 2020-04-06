@@ -1,0 +1,16 @@
+program MJProgram
+	const int i = 5;
+	const int j = true;
+	
+	invalid_type variable;
+	
+	class A {}
+	
+	class B extends A {}
+	class C extends E {}
+{
+	void main()
+	{
+		
+	}
+}

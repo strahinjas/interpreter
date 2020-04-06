@@ -1,0 +1,12 @@
+program MJProgram
+{
+	void f() { }
+	void f(int %% x) { }
+	void f(%int x) { }
+	void f(int x, %%% int y) { }
+
+	void main(int x, , int y)
+	{
+
+	}
+}

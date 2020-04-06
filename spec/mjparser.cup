@@ -1,0 +1,581 @@
+package interpreter.parser;
+
+import java_cup.runtime.*;
+import interpreter.ast.*;
+
+parser code
+{:
+	private boolean errorDetected;
+
+	public boolean isSyntacticallyCorrect()
+	{
+		return !errorDetected;
+	}
+
+	@Override
+    public void report_fatal_error(String message, Object info) throws java.lang.Exception
+    {
+		done_parsing();
+		report_error(message, info);
+    }
+
+    @Override
+    public void syntax_error(Symbol current_token)
+    {
+        report_error("Syntax error", current_token);
+    }
+
+    @Override
+    public void unrecovered_syntax_error(Symbol current_token) throws java.lang.Exception
+    {
+        report_fatal_error("Fatal error, parsing can not continue", current_token);
+    }
+
+	@Override
+    public void report_error(String message, Object info)
+    {
+    	errorDetected = true;
+
+    	StringBuilder builder = new StringBuilder(message);
+
+    	if (info instanceof Symbol)
+            builder.append(" at line ").append(((Symbol)info).left);
+
+        System.out.println(builder.toString());
+    }
+
+	@Override
+    public int error_sync_size()
+    {
+    	return 1;
+    }
+:}
+
+
+init with
+{:
+	errorDetected = false;
+:}
+
+
+scan with
+{:
+	Symbol symbol = this.getScanner().next_token();
+
+	if (symbol != null && symbol.value != null)
+		System.out.println(symbol.toString() + " " + symbol.value.toString());
+
+	return symbol;
+:}
+
+
+/////////////////////////////////////
+///////////// TERMINALS /////////////
+/////////////////////////////////////
+
+// KEYWORDS
+
+terminal PROGRAM, CONST;
+terminal CLASS, ABSTRACT, EXTENDS;
+terminal IF, ELSE;
+terminal NEW;
+terminal READ, PRINT;
+terminal FOR, BREAK, CONTINUE;
+terminal VOID, RETURN;
+
+// IDENTIFIERS
+
+terminal String IDENTIFIER;
+
+// CONSTANTS
+
+terminal Integer INTEGER;
+terminal Character CHARACTER;
+terminal Boolean BOOLEAN;
+
+// OPERATORS
+
+terminal PLUS, MINUS, MUL, DIV, MOD;
+terminal EQUALS, NOT_EQUALS, GREATER, GREATER_EQUALS, LESS, LESS_EQUALS;
+terminal AND, OR;
+terminal ASSIGN;
+terminal INCREMENT, DECREMENT;
+terminal SEMICOLON, COMMA, DOT;
+terminal LEFT_PARENTHESIS, RIGHT_PARENTHESIS;
+terminal LEFT_BRACKET, RIGHT_BRACKET;
+terminal LEFT_BRACE, RIGHT_BRACE;
+
+
+/////////////////////////////////////
+/////////// NONTERMINALS ////////////
+/////////////////////////////////////
+
+
+nonterminal Program;
+nonterminal interpreter.symbols.Symbol ProgramName;
+
+nonterminal DeclList, Decl;
+
+nonterminal ConstDecl, ConstList, Const;
+nonterminal interpreter.symbols.Type Literal;
+
+nonterminal VarDecl, VarList, Var, LocalVarDecl, Brackets;
+
+nonterminal ErrorBefore, Inheritance;
+nonterminal ClassDecl, ClassMethodDeclList, MethodDeclList, MethodDecl, MethodEntry;
+nonterminal interpreter.symbols.Symbol ClassName, MethodName;
+nonterminal AbstractClassDecl, AbstractClassMethodDeclList, AbstractMethodDeclList, AbstractMethodDecl;
+nonterminal interpreter.symbols.Symbol AbstractClassName;
+
+nonterminal FieldDeclarations, FieldDeclList, FieldDecl, FieldList, Field;
+
+nonterminal ReturnType;
+nonterminal interpreter.symbols.Type TypeName;
+
+nonterminal FormPars, FormParsList, FormParam;
+
+nonterminal StatementList, Statement, ElseEntry, ElseStatement;
+nonterminal DesignatorStatement, LoopInit, LoopStep;
+nonterminal interpreter.symbols.Symbol Designator;
+
+nonterminal LogicalOr, LogicalAnd, IfEntry, IfBranch;
+nonterminal interpreter.symbols.Type Condition, LoopCondition, CondTerm, CondFact;
+
+nonterminal interpreter.symbols.Symbol MethodCall, Callee, Args, ArgList, Arg;
+
+nonterminal interpreter.symbols.Symbol Expr, Term, Factor;
+
+nonterminal Assignop, Addop, Mulop, Relop;
+nonterminal PrintWidth;
+
+nonterminal interpreter.symbols.Symbol ErrorProneExpr;
+nonterminal interpreter.symbols.Type ErrorProneCondition;
+
+// PRECEDENCE
+
+precedence left ELSE;
+
+
+/////////////////////////////////////
+////////////// PROGRAM //////////////
+/////////////////////////////////////
+
+
+Program ::=
+	(Program) PROGRAM ProgramName DeclList LEFT_BRACE MethodDeclList RIGHT_BRACE;
+
+ProgramName ::=
+	(ProgramName) IDENTIFIER:name;
+
+
+/////////////////////////////////////
+//////////// DECLARATIONS ///////////
+/////////////////////////////////////
+
+
+DeclList ::=
+	(Declarations) DeclList Decl
+	|
+	(NoDeclarations) /* epsilon */;
+
+Decl ::=
+	(ConstDeclaration) ConstDecl
+	|
+	(VarDeclaration) VarDecl
+	|
+	(ClassDeclaration) ClassDecl
+	|
+	(AbstractClassDeclaration) AbstractClassDecl;
+
+ConstDecl ::=
+	(ConstDecl) CONST TypeName ConstList SEMICOLON;
+
+ConstList ::=
+	(ConstantList) ConstList COMMA Const
+	|
+	(Constant) Const;
+
+Const ::=
+	(Const) IDENTIFIER:name ASSIGN Literal;
+
+Literal ::=
+	(IntLiteral) INTEGER:value
+	|
+	(CharLiteral) CHARACTER:value
+	|
+	(BoolLiteral) BOOLEAN:value;
+
+VarDecl ::=
+	(VariableDeclaration) TypeName VarList SEMICOLON
+	|
+	(ErrorVariableDeclaration) error:e SEMICOLON
+	{: parser.report_error("Parser recovered from an error in variable declaration at line " + eleft, null); :};
+
+VarList ::=
+	(VariablesList) VarList COMMA Var
+	|
+	(Variable) Var;
+
+Var ::=
+	(ValidVar) IDENTIFIER:name Brackets
+	|
+	(ErrorVar) error:e
+	{: parser.report_error("Parser recovered from an error in variable declaration at line " + eleft, null); :};
+
+Brackets ::=
+	(VectorType) LEFT_BRACKET RIGHT_BRACKET
+	|
+	(ScalarType) /* epsilon */;
+
+
+/////////////////////////////////////
+/////////////// CLASS ///////////////
+/////////////////////////////////////
+
+
+ClassDecl ::=
+	(ClassDecl) CLASS ClassName Inheritance LEFT_BRACE FieldDeclarations ClassMethodDeclList RIGHT_BRACE;
+
+ClassName ::=
+	(ClassName) IDENTIFIER:name ErrorBefore;
+
+ErrorBefore ::=
+	(NoErrorBeforeInheritance) /* epsilon */
+	|
+	(ErrorBeforeInheritance) error:e
+	{: parser.report_error("Parser recovered from an invalid class inheritance at line " + eleft, null); :};
+
+Inheritance ::=
+	(WithInheritance) EXTENDS TypeName
+	|
+	(WithoutInheritance) /* epsilon */
+	|
+	(ErrorInheritance) EXTENDS error:e
+	{: parser.report_error("Parser recovered from an invalid class inheritance at line " + eleft, null); :};
+
+FieldDeclarations ::=
+	(FieldDeclarations) FieldDeclList;
+
+FieldDeclList ::=
+	(Fields) FieldDeclList FieldDecl
+	|
+	(NoFields) /* epsilon */;
+
+FieldDecl ::=
+	(FieldDeclaration) TypeName FieldList SEMICOLON
+	|
+	(ErrorFieldDeclaration) error:e SEMICOLON
+	{: parser.report_error("Parser recovered from an error in field declaration at line " + eleft, null); :};
+
+FieldList ::=
+	(MultipleFields) Field COMMA FieldList
+	|
+	(SingleField) Field;
+
+Field ::=
+	(ValidField) IDENTIFIER:name Brackets
+	|
+	(ErrorField) error:e
+	{: parser.report_error("Parser recovered from an error in field declaration at line " + eleft, null); :};
+
+ClassMethodDeclList ::=
+	(ClassMethods) LEFT_BRACE MethodDeclList RIGHT_BRACE
+	|
+	(NoClassMethods) /* epsilon */;
+
+
+/////////////////////////////////////
+////////////// METHODS //////////////
+/////////////////////////////////////
+
+
+MethodDeclList ::=
+	(Methods) MethodDeclList MethodDecl
+	|
+	(NoMethods) /* epsilon */;
+
+MethodDecl ::=
+	(MethodDecl) ReturnType MethodName LEFT_PARENTHESIS FormPars RIGHT_PARENTHESIS LocalVarDecl MethodEntry StatementList RIGHT_BRACE;
+
+MethodName ::=
+	(MethodName) IDENTIFIER:name;
+
+LocalVarDecl ::=
+	(LocalVarDeclarations) LocalVarDecl VarDecl
+	|
+	(NoLocalVarDeclarations) /* epsilon */;
+
+MethodEntry ::=
+	(MethodEntry) LEFT_BRACE;
+
+
+/////////////////////////////////////
+/////////// ABSTRACT CLASS //////////
+/////////////////////////////////////
+
+
+AbstractClassDecl ::=
+	(AbstractClassDecl) ABSTRACT CLASS AbstractClassName Inheritance LEFT_BRACE FieldDeclarations AbstractClassMethodDeclList RIGHT_BRACE;
+
+AbstractClassName ::=
+	(AbstractClassName) IDENTIFIER:name ErrorBefore;
+
+AbstractClassMethodDeclList ::=
+	(AbstractClassMethods) LEFT_BRACE AbstractMethodDeclList RIGHT_BRACE
+	|
+	(NoAbstractClassMethods) /* epsilon */;
+
+AbstractMethodDeclList ::=
+	(AbstractMethods) AbstractMethodDeclList AbstractMethodDecl
+	|
+	(ConcreteMethods) AbstractMethodDeclList MethodDecl
+	|
+	(NoAbstractMethods) /* epsilon */;
+
+AbstractMethodDecl ::=
+	(ValidAbstractMethodDecl) ABSTRACT ReturnType MethodName LEFT_PARENTHESIS FormPars RIGHT_PARENTHESIS SEMICOLON
+	|
+	(InvalidAbstractMethodDecl) error:e SEMICOLON
+	{: parser.report_error("Parser recovered from an invalid abstract method declaration at line " + eleft, null); :};
+
+
+/////////////////////////////////////
+//////////////// TYPE ///////////////
+/////////////////////////////////////
+
+
+ReturnType ::=
+	(SpecialReturnType) TypeName
+	|
+	(VoidReturnType) VOID;
+
+TypeName ::=
+	(TypeName) IDENTIFIER:name;
+
+
+/////////////////////////////////////
+///////// FORMAL PARAMETERS /////////
+/////////////////////////////////////
+
+
+FormPars ::=
+	(FormalParametersList) FormParsList
+	|
+	(NoFormalParameters) /* epsilon */;
+
+FormParsList ::=
+	(FormalParameters) FormParam COMMA FormParsList
+	|
+	(FormalParameter) FormParam;
+
+FormParam ::=
+	(ValidParameter) TypeName IDENTIFIER:name Brackets
+	|
+	(ErrorParameter) error:e
+	{: parser.report_error("Parser recovered from an error in formal parameter declaration at line " + eleft, null); :};
+
+
+/////////////////////////////////////
+//////////// STATEMENTS /////////////
+/////////////////////////////////////
+
+
+StatementList ::=
+	(Statements) StatementList Statement
+	|
+	(NoStatements) /* epsilon */;
+
+Statement ::=
+	(DStatement) DesignatorStatement SEMICOLON
+	|
+	(IfStatement) IfEntry LEFT_PARENTHESIS Condition IfBranch Statement ElseStatement
+	|
+	(LoopStatement) FOR LEFT_PARENTHESIS LoopInit SEMICOLON LoopCondition SEMICOLON LoopStep RIGHT_PARENTHESIS Statement
+	|
+	(BreakStatement) BREAK SEMICOLON
+	|
+	(ContinueStatement) CONTINUE SEMICOLON
+	|
+	(ReturnStatement) RETURN SEMICOLON
+	|
+	(ReturnResultStatement) RETURN Expr SEMICOLON
+	|
+	(ReadStatement) READ LEFT_PARENTHESIS Designator RIGHT_PARENTHESIS SEMICOLON
+	|
+	(PrintStatement) PRINT LEFT_PARENTHESIS Expr PrintWidth RIGHT_PARENTHESIS SEMICOLON
+	|
+	(StatementBlock) LEFT_BRACE StatementList RIGHT_BRACE;
+
+IfEntry ::=
+	(IfEntry) IF;
+
+IfBranch ::=
+	(IfBranch) RIGHT_PARENTHESIS;
+
+ElseStatement ::=
+	(ElseBranch) ElseEntry Statement
+	|
+	(NoElseBranch) /* epsilon */;
+
+ElseEntry ::=
+	(ElseEntry) ELSE;
+
+LoopInit ::=
+	(LoopInitStatement) DesignatorStatement
+	|
+	(NoLoopInit) /* epsilon */;
+
+LoopCondition ::=
+	(LoopStopCondition) ErrorProneCondition
+	|
+	(NoLoopStopCondition) /* epsilon */;
+
+LoopStep ::=
+	(LoopStepStatement) DesignatorStatement
+	|
+	(NoLoopStep) /* epsilon */;
+
+PrintWidth ::=
+	(Width) COMMA INTEGER:value
+	|
+	(NoWidth) /* epsilon */;
+
+DesignatorStatement ::=
+	(DesignatorAssignment) Designator Assignop ErrorProneExpr
+	|
+	(DesignatorMethodCall) MethodCall
+	|
+	(DesignatorIncrement) Designator INCREMENT
+	|
+	(DesignatorDecrement) Designator DECREMENT
+	|
+	(ErrorDesignatorStatement) error:e
+	{: parser.report_error("Parser recovered from an invalid assign statement at line " + eleft, null); :};
+
+ErrorProneExpr ::=
+	(ValidExpr) Expr
+	|
+	(InvalidExpr) error:e
+	{: parser.report_error("Parser recovered from an invalid assign statement at line " + eleft, null); :};
+
+MethodCall ::=
+	(MethodCall) Callee LEFT_PARENTHESIS Args RIGHT_PARENTHESIS;
+
+Callee ::=
+	(Callee) Designator;
+
+Args ::=
+	(Arguments) ArgList
+	|
+	(NoArguments) /* epsilon */;
+
+
+/////////////////////////////////////
+//////////// EXPRESSIONS ////////////
+/////////////////////////////////////
+
+
+ArgList ::=
+	(ArgumentList) ArgList COMMA Arg
+	|
+	(ArgumentDeclaration) Arg;
+
+Arg ::=
+	(Argument) Expr;
+
+ErrorProneCondition ::=
+	(ValidCondition) Condition
+	|
+	(InvalidCondition) error:e
+	{: parser.report_error("Parser recovered from an invalid logical expresson at line " + eleft, null); :};
+
+Condition ::=
+	(OrCondition) Condition LogicalOr CondTerm
+	|
+	(ConditionTerm) CondTerm;
+
+LogicalOr ::=
+	(LogicalOr) OR;
+
+CondTerm ::=
+	(AndCondition) CondTerm LogicalAnd CondFact
+	|
+	(ConditionFact) CondFact;
+
+LogicalAnd ::=
+	(LogicalAnd) AND;
+
+CondFact ::=
+	(ExprFact) Expr
+	|
+	(ExprRelation) Expr Relop Expr;
+
+Expr ::=
+	(TermExpr) Term
+	|
+	(NegativeTermExpr) MINUS Term
+	|
+	(AddopExpr) Expr Addop Term;
+
+Term ::=
+	(FactorTerm) Factor
+	|
+	(MulopTerm) Term Mulop Factor;
+
+Factor ::=
+	(DesignatorFactor) Designator
+	|
+	(MethodCallFactor) MethodCall
+	|
+	(IntFactor) INTEGER:value
+	|
+	(CharFactor) CHARACTER:value
+	|
+	(BoolFactor) BOOLEAN:value
+	|
+	(NewScalarFactor) NEW TypeName
+	|
+	(NewVectorFactor) NEW TypeName LEFT_BRACKET Expr RIGHT_BRACKET
+	|
+	(DelimitedFactor) LEFT_PARENTHESIS Expr RIGHT_PARENTHESIS;
+
+Designator ::=
+	(DesignatorName) IDENTIFIER:name
+	|
+	(DesignatorChaining) Designator DOT IDENTIFIER:chainedName
+	|
+	(DesignatorIndexing) Designator LEFT_BRACKET Expr RIGHT_BRACKET;
+
+
+/////////////////////////////////////
+//////////// OPERATIONS /////////////
+/////////////////////////////////////
+
+
+Assignop ::=
+	(Assignment) ASSIGN;
+
+Relop ::=
+	(Equals) EQUALS
+	|
+	(NotEquals) NOT_EQUALS
+	|
+	(Greater) GREATER
+	|
+	(GreaterEquals) GREATER_EQUALS
+	|
+	(Less) LESS
+	|
+	(LessEquals) LESS_EQUALS;
+
+Addop ::=
+	(Addition) PLUS
+	|
+	(Subtraction) MINUS;
+
+Mulop ::=
+	(Multiplication) MUL
+	|
+	(Divison) DIV
+	|
+	(Modulus) MOD;

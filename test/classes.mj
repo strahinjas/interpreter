@@ -1,0 +1,17 @@
+program MJProgram
+	abstract class A
+	{
+		{
+			abstract void method();
+		}
+	}
+
+	class B extends A {}
+
+	A instance;
+{
+	void main()
+	{
+		instance = new A;
+	}
+}

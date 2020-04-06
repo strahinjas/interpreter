@@ -1,0 +1,16 @@
+program MJProgram
+	abstract class A
+	{
+		{
+			abstract void m(int x, int y);
+			abstract m(int x, int y);
+			abstract %% void m(int x);
+			abstraaact void m();
+		}
+	}
+{
+	void main()
+	{
+
+	}
+}

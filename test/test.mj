@@ -1,0 +1,29 @@
+program MJProgram
+	int i;
+
+	class C
+	{
+		int a;
+		{
+			int getA()
+			{
+				return a;
+			}
+		}
+	}
+{
+	void f()
+	{
+		i = i * i;
+	}
+
+	void main()
+		C c;
+	{
+		c = new C;
+		print(c.getA()); print(eol);
+
+		c.a = 5;
+		print(c.getA()); print(eol);
+	}
+}
