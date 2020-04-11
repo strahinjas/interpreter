@@ -3,13 +3,13 @@ package interpreter.symbols;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class Enviroment
+public class Scope
 {
-	private Enviroment outer;
+	private Scope outer;
 
 	private final Map<String, Symbol> symbols = new LinkedHashMap<>();
 
-	public Enviroment(Enviroment outer)
+	public Scope(Scope outer)
 	{
 		this.outer = outer;
 	}
@@ -37,7 +37,7 @@ public class Enviroment
 		symbols.remove(symbolName);
 	}
 
-	public Enviroment getOuter()
+	public Scope getOuter()
 	{
 		return outer;
 	}

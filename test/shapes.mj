@@ -1,4 +1,4 @@
-program MJProgram
+program Shapes
 	const int size = 10;
 
 	class Point

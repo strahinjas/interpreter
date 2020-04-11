@@ -145,9 +145,9 @@ public class SymbolTableVisitor
 		}
 	}
 
-	public void visit(Enviroment enviroment)
+	public void visit(Scope scope)
 	{
-		for (Symbol symbol : enviroment.getSymbols().values())
+		for (Symbol symbol : scope.getSymbols().values())
 		{
 			symbol.accept(this);
 			output.append(System.lineSeparator());

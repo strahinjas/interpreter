@@ -15,8 +15,8 @@ public class SymbolTable
 
 	public static final	String ENTRY_POINT = "main";
 
-	private final Enviroment universe = new Enviroment(null);
-	private Enviroment enviroment = universe;
+	private final Scope universe = new Scope(null);
+	private Scope currentScope = universe;
 
 	private final Map<Type, Type> arrayTypes = new LinkedHashMap<>();
 	private final Map<String, Type> classTypes = new LinkedHashMap<>();
@@ -24,85 +24,85 @@ public class SymbolTable
 
 	public SymbolTable()
 	{
-		enviroment.addSymbol(new Symbol(Symbol.TYPE, "int", INT_TYPE));
-		enviroment.addSymbol(new Symbol(Symbol.TYPE, "char", CHAR_TYPE));
-		enviroment.addSymbol(new Symbol(Symbol.TYPE, "bool", BOOL_TYPE));
-		enviroment.addSymbol(new Symbol(Symbol.CONSTANT, "null", NULL_TYPE, 0));
-		enviroment.addSymbol(new Symbol(Symbol.CONSTANT, "eol", CHAR_TYPE, System.lineSeparator()));
+		currentScope.addSymbol(new Symbol(Symbol.TYPE, "int", INT_TYPE));
+		currentScope.addSymbol(new Symbol(Symbol.TYPE, "char", CHAR_TYPE));
+		currentScope.addSymbol(new Symbol(Symbol.TYPE, "bool", BOOL_TYPE));
+		currentScope.addSymbol(new Symbol(Symbol.CONSTANT, "null", NULL_TYPE, 0));
+		currentScope.addSymbol(new Symbol(Symbol.CONSTANT, "eol", CHAR_TYPE, System.lineSeparator()));
 
 		Symbol method = new Symbol(Symbol.METHOD, "chr", CHAR_TYPE, null, 1);
-		enviroment.addSymbol(method);
+		currentScope.addSymbol(method);
 		{
 			openScope();
-			enviroment.addSymbol(new Symbol(Symbol.VARIABLE, "integer", INT_TYPE, null, 1));
-			method.setLocals(enviroment.getSymbols());
+			currentScope.addSymbol(new Symbol(Symbol.VARIABLE, "integer", INT_TYPE, null, 1));
+			method.setLocals(currentScope.getSymbols());
 			closeScope();
 		}
 
 		method = new Symbol(Symbol.METHOD, "ord", INT_TYPE);
-		enviroment.addSymbol(method);
+		currentScope.addSymbol(method);
 		{
 			openScope();
-			enviroment.addSymbol(new Symbol(Symbol.VARIABLE, "character", CHAR_TYPE, null, 1));
-			method.setLocals(enviroment.getSymbols());
+			currentScope.addSymbol(new Symbol(Symbol.VARIABLE, "character", CHAR_TYPE, null, 1));
+			method.setLocals(currentScope.getSymbols());
 			closeScope();
 		}
 
 		method = new Symbol(Symbol.METHOD, "len", INT_TYPE);
-		enviroment.addSymbol(method);
+		currentScope.addSymbol(method);
 		{
 			openScope();
-			enviroment.addSymbol(new Symbol(Symbol.VARIABLE, "array", new Type(Type.ARRAY, NO_TYPE), null, 1));
-			method.setLocals(enviroment.getSymbols());
+			currentScope.addSymbol(new Symbol(Symbol.VARIABLE, "array", new Type(Type.ARRAY, NO_TYPE), null, 1));
+			method.setLocals(currentScope.getSymbols());
 			closeScope();
 		}
 	}
 
 	public void openScope()
 	{
-		enviroment = new Enviroment(enviroment);
+		currentScope = new Scope(currentScope);
 	}
 
 	public void closeScope()
 	{
-		enviroment = enviroment.getOuter();
+		currentScope = currentScope.getOuter();
 	}
 
 	public void chainSymbols(Symbol symbol)
 	{
-		symbol.setLocals(enviroment.getSymbols());
+		symbol.setLocals(currentScope.getSymbols());
 	}
 
 	public void chainSymbols(Type type)
 	{
-		type.setMembers(enviroment.getSymbols());
+		type.setMembers(currentScope.getSymbols());
 	}
 
 	public boolean insert(Symbol symbol)
 	{
-		return enviroment.addSymbol(symbol);
+		return currentScope.addSymbol(symbol);
 	}
 
 	public Symbol insert(int kind, String name, Type type)
 	{
 		Symbol symbol = new Symbol(kind, name, type);
 
-		if (enviroment.addSymbol(symbol))
+		if (currentScope.addSymbol(symbol))
 		{
 			return symbol;
 		}
 		else
 		{
-			symbol = enviroment.findSymbol(name);
+			symbol = currentScope.findSymbol(name);
 			return symbol == null ? NO_SYMBOL : symbol;
 		}
 	}
 
 	public Symbol find(String name)
 	{
-		for (Enviroment e = enviroment; e != null; e = e.getOuter())
+		for (Scope scope = currentScope; scope != null; scope = scope.getOuter())
 		{
-			Symbol symbol = e.findSymbol(name);
+			Symbol symbol = scope.findSymbol(name);
 			if (symbol != null) return symbol;
 		}
 
@@ -111,13 +111,13 @@ public class SymbolTable
 
 	public Symbol findInCurrentScope(String name)
 	{
-		Symbol symbol = enviroment.findSymbol(name);
+		Symbol symbol = currentScope.findSymbol(name);
 		return symbol == null ? NO_SYMBOL : symbol;
 	}
 
 	public void remove(String name)
 	{
-		enviroment.removeSymbol(name);
+		currentScope.removeSymbol(name);
 	}
 
 	public Type getArrayType(Type elementType)
@@ -226,7 +226,7 @@ public class SymbolTable
 
 		SymbolTableVisitor visitor = new SymbolTableVisitor(this);
 
-		for (Enviroment e = enviroment; e != null; e = e.getOuter()) e.accept(visitor);
+		for (Scope scope = currentScope; scope != null; scope = scope.getOuter()) scope.accept(visitor);
 
 		System.out.println(System.lineSeparator() + visitor.getOutput());
 	}

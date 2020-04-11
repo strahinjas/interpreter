@@ -1,9 +1,0 @@
-program MJProgram
-	int i;
-	char c, i;
-{
-	void method()
-	{
-		a = 5;
-	}
-}
