@@ -10,4 +10,5 @@
 /spec/mjparser_astbuild.cup
 
 /src/interpreter/ast/
+/src/interpreter/lexer/
 /src/interpreter/parser/

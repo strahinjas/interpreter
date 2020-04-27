@@ -1,5 +1,6 @@
-package interpreter.parser;
+package interpreter.lexer;
 
+import interpreter.parser.sym;
 import java_cup.runtime.Symbol;
 
 %%
@@ -56,12 +57,12 @@ import java_cup.runtime.Symbol;
 "*"						{ return newSymbol(sym.MUL, yytext()); }
 "/"						{ return newSymbol(sym.DIV, yytext()); }
 "%"						{ return newSymbol(sym.MOD, yytext()); }
-"=="					{ return newSymbol(sym.EQUALS, yytext()); }
-"!="					{ return newSymbol(sym.NOT_EQUALS, yytext()); }
+"=="					{ return newSymbol(sym.EQUAL, yytext()); }
+"!="					{ return newSymbol(sym.NOT_EQUAL, yytext()); }
 ">"						{ return newSymbol(sym.GREATER, yytext()); }
-">="					{ return newSymbol(sym.GREATER_EQUALS, yytext()); }
+">="					{ return newSymbol(sym.GREATER_EQUAL, yytext()); }
 "<"						{ return newSymbol(sym.LESS, yytext()); }
-"<="					{ return newSymbol(sym.LESS_EQUALS, yytext()); }
+"<="					{ return newSymbol(sym.LESS_EQUAL, yytext()); }
 "&&"					{ return newSymbol(sym.AND, yytext()); }
 "||"					{ return newSymbol(sym.OR, yytext()); }
 "="						{ return newSymbol(sym.ASSIGN, yytext()); }

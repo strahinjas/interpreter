@@ -2,6 +2,7 @@ package interpreter.symbols;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Stack;
 
 public class SymbolTable
 {
@@ -17,6 +18,12 @@ public class SymbolTable
 
 	private final Scope universe = new Scope(null);
 	private Scope currentScope = universe;
+
+	/**
+	 * Used in intermediate code generation to
+	 * traverse already populated symbol table
+	 */
+	private final Stack<Map<String, Symbol>> scopeStack = new Stack<>();
 
 	private final Map<Type, Type> arrayTypes = new LinkedHashMap<>();
 	private final Map<String, Type> classTypes = new LinkedHashMap<>();
@@ -56,6 +63,8 @@ public class SymbolTable
 			method.setLocals(currentScope.getSymbols());
 			closeScope();
 		}
+
+		scopeStack.push(universe.getSymbols());
 	}
 
 	public void openScope()
@@ -118,6 +127,30 @@ public class SymbolTable
 	public void remove(String name)
 	{
 		currentScope.removeSymbol(name);
+	}
+
+	public void enterScope(String name)
+	{
+		Symbol symbol = scopeStack.peek().get(name);
+		scopeStack.push(symbol.getLocals());
+	}
+
+	public void exitScope()
+	{
+		scopeStack.pop();
+	}
+
+	public Symbol findOnStack(String name)
+	{
+		for (int i = scopeStack.size() - 1; i >= 0; i--)
+		{
+			if (scopeStack.get(i).containsKey(name))
+			{
+				return scopeStack.get(i).get(name);
+			}
+		}
+
+		return NO_SYMBOL;
 	}
 
 	public Type getArrayType(Type elementType)

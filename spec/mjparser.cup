@@ -96,7 +96,7 @@ terminal Boolean BOOLEAN;
 // OPERATORS
 
 terminal PLUS, MINUS, MUL, DIV, MOD;
-terminal EQUALS, NOT_EQUALS, GREATER, GREATER_EQUALS, LESS, LESS_EQUALS;
+terminal EQUAL, NOT_EQUAL, GREATER, GREATER_EQUAL, LESS, LESS_EQUAL;
 terminal AND, OR;
 terminal ASSIGN;
 terminal INCREMENT, DECREMENT;
@@ -138,7 +138,7 @@ nonterminal StatementList, Statement, ElseEntry, ElseStatement;
 nonterminal DesignatorStatement, LoopInit, LoopStep;
 nonterminal interpreter.symbols.Symbol Designator;
 
-nonterminal LogicalOr, LogicalAnd, IfEntry, IfBranch;
+nonterminal LogicalOr, LogicalAnd, IfEntry, ThenBranch;
 nonterminal interpreter.symbols.Type Condition, LoopCondition, CondTerm, CondFact;
 
 nonterminal interpreter.symbols.Symbol MethodCall, Callee, Args, ArgList, Arg;
@@ -147,6 +147,7 @@ nonterminal interpreter.symbols.Symbol Expr, Term, Factor;
 
 nonterminal Assignop, Addop, Mulop, Relop;
 nonterminal PrintWidth;
+nonterminal BlockEntry;
 
 nonterminal interpreter.symbols.Symbol ErrorProneExpr;
 nonterminal interpreter.symbols.Type ErrorProneCondition;
@@ -388,7 +389,7 @@ StatementList ::=
 Statement ::=
 	(DStatement) DesignatorStatement SEMICOLON
 	|
-	(IfStatement) IfEntry LEFT_PARENTHESIS Condition IfBranch Statement ElseStatement
+	(IfStatement) IfEntry LEFT_PARENTHESIS Condition ThenBranch Statement ElseStatement
 	|
 	(LoopStatement) FOR LEFT_PARENTHESIS LoopInit SEMICOLON LoopCondition SEMICOLON LoopStep RIGHT_PARENTHESIS Statement
 	|
@@ -404,13 +405,13 @@ Statement ::=
 	|
 	(PrintStatement) PRINT LEFT_PARENTHESIS Expr PrintWidth RIGHT_PARENTHESIS SEMICOLON
 	|
-	(StatementBlock) LEFT_BRACE StatementList RIGHT_BRACE;
+	(StatementBlock) BlockEntry StatementList RIGHT_BRACE;
 
 IfEntry ::=
 	(IfEntry) IF;
 
-IfBranch ::=
-	(IfBranch) RIGHT_PARENTHESIS;
+ThenBranch ::=
+	(ThenBranch) RIGHT_PARENTHESIS;
 
 ElseStatement ::=
 	(ElseBranch) ElseEntry Statement
@@ -439,6 +440,9 @@ PrintWidth ::=
 	(Width) COMMA INTEGER:value
 	|
 	(NoWidth) /* epsilon */;
+
+BlockEntry ::=
+	(BlockEntry) LEFT_BRACE;
 
 DesignatorStatement ::=
 	(DesignatorAssignment) Designator Assignop ErrorProneExpr
@@ -556,17 +560,17 @@ Assignop ::=
 	(Assignment) ASSIGN;
 
 Relop ::=
-	(Equals) EQUALS
+	(Equals) EQUAL
 	|
-	(NotEquals) NOT_EQUALS
+	(NotEquals) NOT_EQUAL
 	|
 	(Greater) GREATER
 	|
-	(GreaterEquals) GREATER_EQUALS
+	(GreaterEquals) GREATER_EQUAL
 	|
 	(Less) LESS
 	|
-	(LessEquals) LESS_EQUALS;
+	(LessEquals) LESS_EQUAL;
 
 Addop ::=
 	(Addition) PLUS

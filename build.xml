@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="Interpreter" default="lexerGeneration" basedir=".">
+<project name="Interpreter" default="generateLexer" basedir=".">
 
 	<target name="delete">
 		<delete>
 			<file name="src/interpreter/parser/Parser.java"/>
 			<file name="src/interpreter/parser/sym.java"/>
-			<file name="src/interpreter/parser/Yylex.java"/>
+			<file name="src/interpreter/lexer/Yylex.java"/>
 			<fileset dir="src/interpreter/ast"/>
 		</delete>
 		<delete>
@@ -16,7 +16,13 @@
 		</delete>
 	</target>
 
-	<target name="parserGeneration" depends="delete">
+	<target name="deleteIR">
+		<delete>
+			<fileset dir="src/interpreter/ir"/>
+		</delete>
+	</target>
+
+	<target name="generateParser" depends="delete">
 		<java jar="lib/cup_v10k.jar" fork="true">
 			<arg value="-destdir"/>
 			<arg value="src/interpreter/parser"/>
@@ -30,15 +36,15 @@
 		</java>
 	</target>
 
-	<target name="repackage" depends="parserGeneration">
+	<target name="repackage" depends="generateParser">
 		<!-- Replaces all of the references to the old package name in files in the "src" directory -->
 		<replace dir="src" value="interpreter.ast" token="src.interpreter.ast" summary="true"/>
 	</target>
 
-	<target name="lexerGeneration" depends="repackage">
+	<target name="generateLexer" depends="repackage">
 		<java jar="lib/JFlex.jar" fork="true">
 			<arg value="-d"/>
-			<arg value="src/interpreter/parser"/>
+			<arg value="src/interpreter/lexer"/>
 			<arg value="spec/mjlexer.flex"/>
 		</java>
 	</target>

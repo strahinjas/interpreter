@@ -2,8 +2,8 @@ package interpreter;
 
 import interpreter.ast.Program;
 import interpreter.ast.SyntaxNode;
+import interpreter.lexer.Yylex;
 import interpreter.parser.Parser;
-import interpreter.parser.Yylex;
 import interpreter.symbols.SymbolTable;
 import java_cup.runtime.Symbol;
 
@@ -70,6 +70,12 @@ public class Main
 
 			if (analyzer.isSemanticallyCorrect())
 			{
+				System.out.println("================== Intermediate Code Generation =====================");
+
+				IntermediateCodeGenerator generator = new IntermediateCodeGenerator(symbolTable);
+
+				generator.generate(program);
+
 				System.out.println("=========================== Interpretation ==========================");
 				System.out.println("Interpreting finished successfully!");
 			}
