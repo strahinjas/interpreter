@@ -6,6 +6,7 @@ import interpreter.ir.Statement;
 import interpreter.symbols.Symbol;
 import interpreter.symbols.SymbolTable;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
@@ -15,7 +16,11 @@ public class IntermediateCodeGenerator extends VisitorAdaptor
 	private final SymbolTable symbolTable;
 
 	private final Stack<Expression> expressionStack = new Stack<>();
-	private final Stack<List<Statement>> statementStack = new Stack<>();
+	private final Stack<LinkedList<Statement>> statementStack = new Stack<>();
+
+	private Symbol method;
+
+	private Symbol classSymbol;
 
 	private Statement.Program intermediateCode;
 
@@ -35,12 +40,51 @@ public class IntermediateCodeGenerator extends VisitorAdaptor
 
 	private Expression.Binary.Operation getBinaryOperation(Object object)
 	{
-		final String regex = "([a-z])([A-Z]+)";
+		final String regex = "([a-z])([A-Z])";
 		final String replacement = "$1_$2";
 
 		final String className = object.getClass().getSimpleName();
 
 		return Expression.Binary.Operation.valueOf(className.replaceAll(regex, replacement).toUpperCase());
+	}
+
+	private void createClassStatement(int line, Statement.Class.Type type)
+	{
+		String name = classSymbol.getName();
+		List<String> fields = new ArrayList<>();
+
+		for (Symbol member : classSymbol.getType().getMembersCollection())
+		{
+			if (member.getKind() == Symbol.FIELD) fields.add(member.getName());
+		}
+
+		List<Statement> statements = statementStack.pop();
+		List<Statement.Method> methods = new LinkedList<>();
+
+		for (Statement statement : statements)
+		{
+			methods.add((Statement.Method) statement);
+		}
+
+		symbolTable.exitScope();
+
+		statementStack.peek().add(new Statement.Class(line, name, type, fields, methods));
+	}
+
+	private void createMethodStatement(int line)
+	{
+		List<String> parameters = new ArrayList<>();
+
+		for (int i = 1; i <= method.getParameter(); i++)
+		{
+			parameters.add(symbolTable.getFormalParameter(method, i).getName());
+		}
+
+		LinkedList<Statement> body = statementStack.pop();
+
+		symbolTable.exitScope();
+
+		statementStack.peek().add(new Statement.Method(line, method.getName(), parameters, body));
 	}
 
 	//////////////////////////////////////
@@ -129,13 +173,41 @@ public class IntermediateCodeGenerator extends VisitorAdaptor
 	@Override
 	public void visit(DesignatorChaining designatorChaining)
 	{
-		// TODO: Designator Chaining
+		int line = designatorChaining.getLine();
+
+		Expression object = expressionStack.pop();
+		String name = designatorChaining.getChainedName();
+
+		expressionStack.push(new Expression.Property(line, object, name));
 	}
 
 	@Override
 	public void visit(DesignatorIndexing designatorIndexing)
 	{
-		// TODO: Designator Indexing
+		int line = designatorIndexing.getLine();
+
+		Expression index = expressionStack.pop();
+		Expression array = expressionStack.pop();
+
+		expressionStack.push(new Expression.Index(line, array, index));
+	}
+
+	@Override
+	public void visit(MethodCall methodCall)
+	{
+		int line = methodCall.getLine();
+		Symbol method = methodCall.getCallee().getDesignator().symbol;
+
+		LinkedList<Expression> arguments = new LinkedList<>();
+
+		for (int i = 0; i < method.getParameter(); i++)
+		{
+			arguments.addFirst(expressionStack.pop());
+		}
+
+		Expression callee = expressionStack.pop();
+
+		expressionStack.push(new Expression.Call(line, callee, arguments));
 	}
 
 	@Override
@@ -168,13 +240,20 @@ public class IntermediateCodeGenerator extends VisitorAdaptor
 	@Override
 	public void visit(NewScalarFactor newScalarFactor)
 	{
-		// TODO: New Operator
+		int line = newScalarFactor.getLine();
+		String type = newScalarFactor.getTypeName().getName();
+
+		expressionStack.push(new Expression.New(line, type, null));
 	}
 
 	@Override
 	public void visit(NewVectorFactor newVectorFactor)
 	{
-		// TODO: New Operator
+		int line = newVectorFactor.getLine();
+		String type = newVectorFactor.getTypeName().getName();
+		Expression size = expressionStack.pop();
+
+		expressionStack.push(new Expression.New(line, type, size));
 	}
 
 	@Override
@@ -225,36 +304,174 @@ public class IntermediateCodeGenerator extends VisitorAdaptor
 	}
 
 	@Override
+	public void visit(ClassDecl classDecl)
+	{
+		int line = classDecl.getLine();
+		createClassStatement(line, Statement.Class.Type.CONCRETE);
+	}
+
+	@Override
+	public void visit(ClassName className)
+	{
+		classSymbol = symbolTable.findOnStack(className.getName());
+
+		symbolTable.enterScope(classSymbol.getName());
+		statementStack.push(new LinkedList<>());
+	}
+
+	@Override
+	public void visit(AbstractClassDecl abstractClassDecl)
+	{
+		int line = abstractClassDecl.getLine();
+		createClassStatement(line, Statement.Class.Type.ABSTRACT);
+	}
+
+	@Override
+	public void visit(AbstractClassName abstractClassName)
+	{
+		classSymbol = symbolTable.findOnStack(abstractClassName.getName());
+
+		symbolTable.enterScope(classSymbol.getName());
+		statementStack.push(new LinkedList<>());
+	}
+
+	@Override
+	public void visit(MethodDecl methodDecl)
+	{
+		createMethodStatement(methodDecl.getLine());
+	}
+
+	@Override
+	public void visit(ValidAbstractMethodDecl validAbstractMethodDecl)
+	{
+		createMethodStatement(validAbstractMethodDecl.getLine());
+	}
+
+	@Override
+	public void visit(MethodName methodName)
+	{
+		method = symbolTable.findOnStack(methodName.getName());
+
+		symbolTable.enterScope(method.getName());
+		statementStack.push(new LinkedList<>());
+	}
+
+	@Override
 	public void visit(DesignatorAssignment designatorAssignment)
 	{
-		Expression value = expressionStack.pop();
+		int line = designatorAssignment.getLine();
 
-		// TODO: Assignment
+		Expression value = expressionStack.pop();
+		Expression destination = expressionStack.pop();
+
+		statementStack.peek().add(new Statement.Assignment(line, destination, value));
 	}
 
 	@Override
 	public void visit(DesignatorIncrement designatorIncrement)
 	{
-		// TODO: Increment
+		int line = designatorIncrement.getLine();
+		Expression number = expressionStack.pop();
+
+		statementStack.peek().add(new Statement.Increment(line, number));
 	}
 
 	@Override
 	public void visit(DesignatorDecrement designatorDecrement)
 	{
-		// TODO: Decrement
+		int line = designatorDecrement.getLine();
+		Expression number = expressionStack.pop();
+
+		statementStack.peek().add(new Statement.Decrement(line, number));
 	}
 
 	@Override
 	public void visit(IfStatement ifStatement)
 	{
-		Statement thenBranch = null;
+		int line = ifStatement.getLine();
+		Expression condition = expressionStack.pop();
+
 		Statement elseBranch = null;
+
+		if (ifStatement.getElseStatement() instanceof ElseBranch)
+		{
+			elseBranch = statementStack.peek().removeLast();
+		}
+
+		Statement thenBranch = statementStack.peek().removeLast();
+
+		statementStack.peek().add(new Statement.If(line, condition, thenBranch, elseBranch));
+	}
+
+	@Override
+	public void visit(LoopStatement loopStatement)
+	{
+		int line = loopStatement.getLine();
+
+		Statement initializer = null;
+		Statement increment = null;
+
+		Expression condition;
+
+		Statement body = statementStack.peek().removeLast();
+
+		if (loopStatement.getLoopStep() instanceof LoopStepStatement)
+		{
+			increment = statementStack.peek().removeLast();
+		}
+
+		if (loopStatement.getLoopCondition() instanceof LoopStopCondition)
+		{
+			condition = expressionStack.pop();
+		}
+		else
+		{
+			condition = new Expression.Literal(line, true);
+		}
+
+		if (loopStatement.getLoopInit() instanceof LoopInitStatement)
+		{
+			initializer = statementStack.peek().removeLast();
+		}
+
+		statementStack.peek().add(new Statement.For(line, initializer, condition, increment, body));
+	}
+
+	@Override
+	public void visit(BreakStatement breakStatement)
+	{
+		int line = breakStatement.getLine();
+		statementStack.peek().add(new Statement.Control(line, Statement.Control.Type.BREAK));
+	}
+
+	@Override
+	public void visit(ContinueStatement continueStatement)
+	{
+		int line = continueStatement.getLine();
+		statementStack.peek().add(new Statement.Control(line, Statement.Control.Type.CONTINUE));
+	}
+
+	@Override
+	public void visit(ReturnStatement returnStatement)
+	{
+		int line = returnStatement.getLine();
+		statementStack.peek().add(new Statement.Return(line, null));
+	}
+
+	@Override
+	public void visit(ReturnResultStatement returnResultStatement)
+	{
+		int line = returnResultStatement.getLine();
+		statementStack.peek().add(new Statement.Return(line, expressionStack.pop()));
 	}
 
 	@Override
 	public void visit(ReadStatement readStatement)
 	{
-		// TODO: Read
+		int line = readStatement.getLine();
+		Expression destination = expressionStack.pop();
+
+		statementStack.peek().add(new Statement.Read(line, destination));
 	}
 
 	@Override

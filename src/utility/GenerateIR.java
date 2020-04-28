@@ -26,29 +26,33 @@ public class GenerateIR
 		{
 			defineIRClass(outputDirectory, "Expression", Arrays.asList(
 					"Binary   : Expression left, Binary.Operation operation, Expression right",
-//					"Call     : ",
+					"Call     : Expression callee, List<Expression> arguments",
 					"Group    : Expression expression",
+					"Index    : Expression array, Expression index",
 					"Literal  : Object value",
 					"Logical  : Expression left, Logical.Operation operation, Expression right",
+					"New      : String type, Expression size",
+					"Property : Expression object, String name",
 					"Unary    : Unary.Operation operation, Expression right",
 					"Variable : String name"
 			));
 
 			defineIRClass(outputDirectory, "Statement", Arrays.asList(
-					"Assignment : String name, Expression value",
+					"Assignment : Expression destination, Expression value",
 					"Block      : List<Statement> statements",
-//					"Class      : ",
+					"Call       : Expression.Call expression",
+					"Class      : String name, Class.Type type, List<String> fields, List<Statement.Method> methods",
 					"Constant   : String name, Object value",
-					"Decrement  : String name",
-//					"Expression : Expression expression",
-//					"For        : ",
+					"Control    : Control.Type type",
+					"Decrement  : Expression number",
+					"For        : Statement initializer, Expression condition, Statement increment, Statement body",
 					"If         : Expression condition, Statement thenBranch, Statement elseBranch",
-					"Increment  : String name",
-//					"Method     : ",
+					"Increment  : Expression number",
+					"Method     : String name, List<String> parameters, List<Statement> body",
 					"Print      : Expression expression, Integer width",
 					"Program    : List<Statement> statements",
-//					"Read       : ",
-//					"Return     : ",
+					"Read       : Expression destination",
+					"Return     : Expression value",
 					"Variable   : String name"
 			));
 		}
@@ -119,8 +123,9 @@ public class GenerateIR
 		writer.println("\tpublic static class " + className + " extends " + baseClassName);
 		writer.println("\t{");
 
-		if (className.equals("Binary"))
+		switch (className)
 		{
+		case "Binary":
 			writer.println("\t\tpublic enum Operation");
 			writer.println("\t\t{");
 			writer.println("\t\t\tADDITION,");
@@ -136,30 +141,35 @@ public class GenerateIR
 			writer.println("\t\t\tLESS_EQUAL");
 			writer.println("\t\t}");
 			writer.println();
-		}
-
-		if (className.equals("Logical"))
-		{
+			break;
+		case "Logical":
 			writer.println("\t\tpublic enum Operation { AND, OR }");
 			writer.println();
-		}
-
-		if (className.equals("Unary"))
-		{
+			break;
+		case "Unary":
 			writer.println("\t\tpublic enum Operation { NEGATION }");
 			writer.println();
+			break;
+		case "Class":
+			writer.println("\t\tpublic enum Type { ABSTRACT, CONCRETE }");
+			writer.println();
+			break;
+		case "Control":
+			writer.println("\t\tpublic enum Type { BREAK, CONTINUE }");
+			writer.println();
+			break;
 		}
 
 		String[] fields = fieldList.split(", ");
 
-		// Fields
+		// fields
 		for (String field : fields)
 		{
 			writer.println("\t\tpublic final " + field + ";");
 		}
 		writer.println();
 
-		// Constructor
+		// constructor
 		writer.println("\t\tpublic " + className + "(int line, " + fieldList + ")");
 		writer.println("\t\t{");
 		writer.println("\t\t\tsuper(line);");
@@ -174,7 +184,7 @@ public class GenerateIR
 		writer.println("\t\t}");
 		writer.println();
 
-		// Accept method
+		// accept method
 		writer.println("\t\t@Override");
 		writer.println("\t\tpublic <R> R accept(Visitor<R> visitor)");
 		writer.println("\t\t{");

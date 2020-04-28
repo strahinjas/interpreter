@@ -1,29 +1,49 @@
 program Test
 	int i;
+	int a[];
 
-	class C
+	abstract class A
 	{
-		int a;
+		int x;
 		{
-			int getA()
+			abstract void m();
+		}
+	}
+
+	class C extends A
+	{
+		int y;
+		{
+			void m()
+				C c;
 			{
-				return a;
+				c = new C;
+				a = new int[y + 5];
+
+				if (x != 1)
+				{
+					print(x); print(eol);
+				}
+				else
+				{
+					print(y); print(eol);
+				}
 			}
 		}
 	}
 {
-	void f()
+	void f(char c)
+		bool b;
 	{
-		i = i * i;
+		print(i * 5 + 2);
+		a[0] = 5;
 	}
 
 	void main()
-		C c;
 	{
-		c = new C;
-		print(c.getA()); print(eol);
-
-		c.a = 5;
-		print(c.getA()); print(eol);
+		for(; ;)
+		{
+			print(i); print(eol);
+		}
 	}
 }

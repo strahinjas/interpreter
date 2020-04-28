@@ -13,22 +13,53 @@ public class Main
 {
 	public static void main(String[] args) throws Exception
 	{
-		if (args.length != 1)
+		if (args.length < 2 || args.length > 3)
 		{
 			System.err.println("Wrong number of arguments!");
-			System.err.println("Program should be called with exactly one argument: input_file(.mj)");
+			System.err.println("Program should be called with two or three arguments: input_file(.mj) to_interpret [output_file(.ir)]");
 			return;
+		}
+
+		String inputFileName = args[0];
+
+		if (!inputFileName.endsWith(".mj"))
+		{
+			System.err.println("Invalid MicroJava source code provided");
+			System.err.println("Input file should have (.mj) extension");
+			return;
+		}
+
+		boolean toInterpret = Boolean.parseBoolean(args[1]);
+
+		String outputFileName;
+
+		if (toInterpret)
+		{
+			if (args.length == 2)
+			{
+				outputFileName = inputFileName.replace(".mj", ".ir");
+			}
+			else
+			{
+				outputFileName = args[2];
+			}
+
+			if (!outputFileName.endsWith(".ir"))
+			{
+				System.err.println("Invalid output file provided");
+				System.err.println("Output file should have (.ir) extension");
+				return;
+			}
 		}
 
 		Reader reader = null;
 		try
 		{
-			File sourceFile = new File(args[0]);
+			File sourceFile = new File(inputFileName);
 
-			if (!sourceFile.exists() ||
-				!sourceFile.getName().endsWith(".mj"))
+			if (!sourceFile.exists())
 			{
-				System.err.println("Invalid MicroJava source code provided");
+				System.err.println("Provided input file could not be found");
 				return;
 			}
 

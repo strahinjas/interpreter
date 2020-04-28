@@ -132,7 +132,15 @@ public class SymbolTable
 	public void enterScope(String name)
 	{
 		Symbol symbol = scopeStack.peek().get(name);
-		scopeStack.push(symbol.getLocals());
+
+		if (symbol.getKind() == Symbol.TYPE)
+		{
+			scopeStack.push(symbol.getType().getMembers());
+		}
+		else
+		{
+			scopeStack.push(symbol.getLocals());
+		}
 	}
 
 	public void exitScope()

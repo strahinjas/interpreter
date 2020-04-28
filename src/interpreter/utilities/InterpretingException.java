@@ -1,4 +1,4 @@
-package interpreter;
+package interpreter.utilities;
 
 public class InterpretingException extends RuntimeException
 {

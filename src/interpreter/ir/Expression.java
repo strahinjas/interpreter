@@ -1,13 +1,19 @@
 package interpreter.ir;
 
+import java.util.List;
+
 public abstract class Expression
 {
 	public interface Visitor<R>
 	{
 		R visit(Binary expression);
+		R visit(Call expression);
 		R visit(Group expression);
+		R visit(Index expression);
 		R visit(Literal expression);
 		R visit(Logical expression);
+		R visit(New expression);
+		R visit(Property expression);
 		R visit(Unary expression);
 		R visit(Variable expression);
 	}
@@ -57,6 +63,25 @@ public abstract class Expression
 		}
 	}
 
+	public static class Call extends Expression
+	{
+		public final Expression callee;
+		public final List<Expression> arguments;
+
+		public Call(int line, Expression callee, List<Expression> arguments)
+		{
+			super(line);
+			this.callee = callee;
+			this.arguments = arguments;
+		}
+
+		@Override
+		public <R> R accept(Visitor<R> visitor)
+		{
+			return visitor.visit(this);
+		}
+	}
+
 	public static class Group extends Expression
 	{
 		public final Expression expression;
@@ -65,6 +90,25 @@ public abstract class Expression
 		{
 			super(line);
 			this.expression = expression;
+		}
+
+		@Override
+		public <R> R accept(Visitor<R> visitor)
+		{
+			return visitor.visit(this);
+		}
+	}
+
+	public static class Index extends Expression
+	{
+		public final Expression array;
+		public final Expression index;
+
+		public Index(int line, Expression array, Expression index)
+		{
+			super(line);
+			this.array = array;
+			this.index = index;
 		}
 
 		@Override
@@ -105,6 +149,44 @@ public abstract class Expression
 			this.left = left;
 			this.operation = operation;
 			this.right = right;
+		}
+
+		@Override
+		public <R> R accept(Visitor<R> visitor)
+		{
+			return visitor.visit(this);
+		}
+	}
+
+	public static class New extends Expression
+	{
+		public final String type;
+		public final Expression size;
+
+		public New(int line, String type, Expression size)
+		{
+			super(line);
+			this.type = type;
+			this.size = size;
+		}
+
+		@Override
+		public <R> R accept(Visitor<R> visitor)
+		{
+			return visitor.visit(this);
+		}
+	}
+
+	public static class Property extends Expression
+	{
+		public final Expression object;
+		public final String name;
+
+		public Property(int line, Expression object, String name)
+		{
+			super(line);
+			this.object = object;
+			this.name = name;
 		}
 
 		@Override

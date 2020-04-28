@@ -560,17 +560,17 @@ Assignop ::=
 	(Assignment) ASSIGN;
 
 Relop ::=
-	(Equals) EQUAL
+	(Equal) EQUAL
 	|
-	(NotEquals) NOT_EQUAL
+	(NotEqual) NOT_EQUAL
 	|
 	(Greater) GREATER
 	|
-	(GreaterEquals) GREATER_EQUAL
+	(GreaterEqual) GREATER_EQUAL
 	|
 	(Less) LESS
 	|
-	(LessEquals) LESS_EQUAL;
+	(LessEqual) LESS_EQUAL;
 
 Addop ::=
 	(Addition) PLUS

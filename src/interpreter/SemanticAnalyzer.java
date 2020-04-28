@@ -388,7 +388,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 					{
 						boolean areEqual = true;
 
-						for (int i = 1; i < method.getParameter(); i++)
+						for (int i = 1; i <= method.getParameter(); i++)
 						{
 							Symbol abstractParameter = symbolTable.getFormalParameter(member, i);
 							Symbol concreteParameter = symbolTable.getFormalParameter(method, i);
@@ -1020,7 +1020,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 			{
 				Relop operation = exprRelation.getRelop();
 
-				if (!(operation instanceof Equals) && !(operation instanceof NotEquals))
+				if (!(operation instanceof Equal) && !(operation instanceof NotEqual))
 				{
 					reportError(exprRelation.getLine(),
 								"Classes and arrays can only be compared for equality");

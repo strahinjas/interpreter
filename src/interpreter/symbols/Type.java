@@ -99,7 +99,7 @@ public class Type
 
 	public boolean isReferenceType()
 	{
-		return kind == ARRAY || kind == CLASS;
+		return kind == ARRAY || kind == CLASS || kind == ABSTRACT_CLASS;
 	}
 
 	public boolean compatibleWith(Type other)

@@ -2,12 +2,12 @@ package interpreter.symbols;
 
 public class SymbolTableVisitor
 {
-	private SymbolTable symbolTable;
+	private final SymbolTable symbolTable;
 
 	private final StringBuilder output = new StringBuilder();
 
 	private final String indentation = "\t";
-	private StringBuilder currentIndentation = new StringBuilder();
+	private final StringBuilder currentIndentation = new StringBuilder();
 
 	public SymbolTableVisitor(SymbolTable symbolTable)
 	{
@@ -55,8 +55,7 @@ public class SymbolTableVisitor
 		output.append(symbol.getName());
 		output.append(": ");
 
-		if ((symbol.getKind() == Symbol.VARIABLE && "this".equalsIgnoreCase(symbol.getName())) ||
-			 symbol.getKind() == Symbol.METHOD)
+		if (symbol.getKind() != Symbol.TYPE && symbol.getType().isReferenceType())
 			output.append(symbolTable.getTypeName(symbol.getType()));
 		else
 			symbol.getType().accept(this);
