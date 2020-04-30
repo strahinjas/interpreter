@@ -85,7 +85,7 @@ public class SymbolTableVisitor
 		switch (type.getKind())
 		{
 		case Type.NONE:
-			output.append("notype");
+			output.append("no_type");
 			break;
 		case Type.INT:
 			output.append("int");
@@ -102,7 +102,7 @@ public class SymbolTableVisitor
 			switch (type.getParentType().getKind())
 			{
 			case Type.NONE:
-				output.append("notype");
+				output.append("no_type");
 				break;
 			case Type.INT:
 				output.append("int");

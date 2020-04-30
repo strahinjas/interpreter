@@ -38,27 +38,27 @@ public class GenerateIR
 			));
 
 			defineIRClass(outputDirectory, "Statement", Arrays.asList(
-					"Assignment : Expression destination, Expression value",
-					"Block      : List<Statement> statements",
-					"Call       : Expression.Call expression",
-					"Class      : String name, Class.Type type, List<String> fields, List<Statement.Method> methods",
-					"Constant   : String name, Object value",
-					"Control    : Control.Type type",
-					"Decrement  : Expression number",
-					"For        : Statement initializer, Expression condition, Statement increment, Statement body",
-					"If         : Expression condition, Statement thenBranch, Statement elseBranch",
-					"Increment  : Expression number",
-					"Method     : String name, List<String> parameters, List<Statement> body",
-					"Print      : Expression expression, Integer width",
-					"Program    : List<Statement> statements",
-					"Read       : Expression destination",
-					"Return     : Expression value",
-					"Variable   : String name"
+					"Assignment  : Expression destination, Expression value",
+					"Block       : List<Statement> statements",
+					"Call        : Expression.Call expression",
+					"Class       : String name, String superClass, List<Class.Field> fields, List<Statement.Method> methods",
+					"Constant    : String name, Object value",
+					"Control     : Control.Type type",
+					"Declaration : Declaration.Type type, String name",
+					"Decrement   : Expression number",
+					"For         : Statement initializer, Expression condition, Statement increment, Statement body",
+					"If          : Expression condition, Statement thenBranch, Statement elseBranch",
+					"Increment   : Expression number",
+					"Method      : boolean isVoid, String name, List<String> parameters, List<Statement> body",
+					"Print       : Expression expression, Integer width",
+					"Program     : List<Statement> statements",
+					"Read        : Declaration.Type type, Expression destination",
+					"Return      : Expression value"
 			));
 		}
-		catch (IOException e)
+		catch (IOException exception)
 		{
-			System.err.println(e.getMessage());
+			System.err.println(exception.getMessage());
 		}
 	}
 
@@ -70,9 +70,10 @@ public class GenerateIR
 
 		writer.println("package interpreter.ir;");
 		writer.println();
+		writer.println("import java.io.Serializable;");
 		writer.println("import java.util.List;");
 		writer.println();
-		writer.println("public abstract class " + className);
+		writer.println("public abstract class " + className + " implements Serializable");
 		writer.println("{");
 
 		defineVisitor(writer, className, subClasses);
@@ -120,9 +121,10 @@ public class GenerateIR
 
 	private static void defineSubClass(PrintWriter writer, String baseClassName, String className, String fieldList)
 	{
-		writer.println("\tpublic static class " + className + " extends " + baseClassName);
+		writer.println("\tpublic static final class " + className + " extends " + baseClassName);
 		writer.println("\t{");
 
+		// enums
 		switch (className)
 		{
 		case "Binary":
@@ -151,11 +153,31 @@ public class GenerateIR
 			writer.println();
 			break;
 		case "Class":
-			writer.println("\t\tpublic enum Type { ABSTRACT, CONCRETE }");
+			writer.println("\t\tpublic static final class Field implements Serializable");
+			writer.println("\t\t{");
+			writer.println("\t\t\tpublic final String name;");
+			writer.println("\t\t\tpublic final Declaration.Type type;");
+			writer.println();
+			writer.println("\t\t\tpublic Field(String name, Declaration.Type type)");
+			writer.println("\t\t\t{");
+			writer.println("\t\t\t\tthis.name = name;");
+			writer.println("\t\t\t\tthis.type = type;");
+			writer.println("\t\t\t}");
+			writer.println("\t\t}");
 			writer.println();
 			break;
 		case "Control":
 			writer.println("\t\tpublic enum Type { BREAK, CONTINUE }");
+			writer.println();
+			break;
+		case "Declaration":
+			writer.println("\t\tpublic enum Type");
+			writer.println("\t\t{");
+			writer.println("\t\t\tINTEGER,");
+			writer.println("\t\t\tCHARACTER,");
+			writer.println("\t\t\tBOOLEAN,");
+			writer.println("\t\t\tREFERENCE");
+			writer.println("\t\t}");
 			writer.println();
 			break;
 		}

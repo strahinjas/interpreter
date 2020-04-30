@@ -1,8 +1,8 @@
-package interpreter.utilities;
+package interpreter.runtime;
 
 public class InterpretingException extends RuntimeException
 {
-	InterpretingException(int line, String message)
+	public InterpretingException(int line, String message)
 	{
 		super("Runtime error (line " + line + "): " + message);
 	}

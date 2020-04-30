@@ -9,9 +9,7 @@ import java.util.Stack;
 
 public class SemanticAnalyzer extends VisitorAdaptor
 {
-	//////////////////////////////////////
-	/////////////// GLOBAL ///////////////
-	//////////////////////////////////////
+	private static final String THIS = "this";
 
 	private boolean errorDetected;
 
@@ -112,7 +110,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 
 	private void reportDeclaredInScope(int line, String name)
 	{
-		reportError(line, "Name '" + name + "' has already been declared in this scope");
+		reportError(line, "Name '" + name + "' has already been declared in this scope!");
 	}
 
 	public void reportError(int line, String message)
@@ -146,7 +144,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 	{
 		if (!mainFound)
 		{
-			reportError(program.getLine(), "Static void method 'main' not defined");
+			reportError(program.getLine(), "Static void method 'main' not defined!");
 		}
 
 		symbolTable.chainSymbols(program.getProgramName().symbol);
@@ -164,7 +162,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 
 		if (typeSymbol == SymbolTable.NO_SYMBOL)
 		{
-			reportError(typeName.getLine(), "Type '" + typeName.getName() + "' has not been defined");
+			reportError(typeName.getLine(), "Type '" + typeName.getName() + "' has not been defined!");
 			typeName.type = SymbolTable.NO_TYPE;
 		}
 		else if (typeSymbol.getKind() == Symbol.TYPE)
@@ -173,7 +171,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 		}
 		else
 		{
-			reportError(typeName.getLine(), "Identifier '" + typeName.getName() + "' does not represent a type");
+			reportError(typeName.getLine(), "Identifier '" + typeName.getName() + "' does not represent a type!");
 			typeName.type = SymbolTable.NO_TYPE;
 		}
 
@@ -220,7 +218,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 		}
 		else
 		{
-			reportError(constant.getLine(), "Literal type does not match one in constant definition");
+			reportError(constant.getLine(), "Literal type does not match one in constant definition.");
 		}
 	}
 
@@ -279,16 +277,16 @@ public class SemanticAnalyzer extends VisitorAdaptor
 
 		if (symbolTable.find(baseClassName) == SymbolTable.NO_SYMBOL)
 		{
-			reportError(withInheritance.getLine(), "Base class '" + baseClassName + "' has not been defined");
+			reportError(withInheritance.getLine(), "Base class '" + baseClassName + "' has not been defined!");
 		}
 		else if (currentClass.getType() == baseClassType)
 		{
-			reportError(withInheritance.getLine(), "Class cannot extend itself");
+			reportError(withInheritance.getLine(), "Class cannot extend itself!");
 		}
 		else if (baseClassType.getKind() != Type.CLASS &&
 				 baseClassType.getKind() != Type.ABSTRACT_CLASS)
 		{
-			reportError(withInheritance.getLine(), "Class can only extend another class type or abstract class type");
+			reportError(withInheritance.getLine(), "Class can only extend another class type or abstract class type!");
 		}
 		else
 		{
@@ -335,11 +333,11 @@ public class SemanticAnalyzer extends VisitorAdaptor
 					symbolTable.insert(method);
 					symbolTable.openScope();
 
-					symbolTable.insert(new Symbol(Symbol.VARIABLE, "this", currentClass.getType()));
+					symbolTable.insert(new Symbol(Symbol.VARIABLE, THIS, currentClass.getType()));
 
 					for (Symbol local : symbol.getLocals().values())
 					{
-						if (!local.getName().equals("this"))
+						if (!local.getName().equals(THIS))
 						{
 							symbolTable.insert(getSymbolCopy(local));
 						}
@@ -370,19 +368,19 @@ public class SemanticAnalyzer extends VisitorAdaptor
 					if (method == SymbolTable.NO_SYMBOL)
 					{
 						reportError(classDecl.getLine(), "Class '" + currentClass.getName() +
-														 "' does not implement abstract method '" + member.getName() + "'");
+														 "' does not implement abstract method '" + member.getName() + "'.");
 					}
 					else if (method.getParameter() != -member.getParameter() - 1)
 					{
 						reportError(classDecl.getLine(), "Class '" + currentClass.getName() +
 														 "' implements abstract method '" + member.getName() +
-														 "' but with wrong number of parameters");
+														 "' but with wrong number of parameters.");
 					}
 					else if (!method.getType().equals(member.getType()))
 					{
 						reportError(classDecl.getLine(), "Class '" + currentClass.getName() +
 														 "' implements abstract method '" + member.getName() +
-														 "' but with wrong return type");
+														 "' but with wrong return type.");
 					}
 					else
 					{
@@ -404,7 +402,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 						{
 							reportError(classDecl.getLine(), "Class '" + currentClass.getName() +
 															 "' implements abstract method '" + member.getName() +
-															 "' but with wrong type of parameters");
+															 "' but with wrong type of parameters.");
 						}
 					}
 				}
@@ -498,7 +496,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 				mainFound = true;
 				if (currentMethodReturnType != SymbolTable.NO_TYPE)
 				{
-					reportError(methodName.getLine(), "Main method must have void return type");
+					reportError(methodName.getLine(), "Main method must have void return type!");
 				}
 			}
 
@@ -512,7 +510,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 
 			if (currentClass != SymbolTable.NO_SYMBOL)
 			{
-				symbolTable.insert(Symbol.VARIABLE, "this", currentClass.getType());
+				symbolTable.insert(Symbol.VARIABLE, THIS, currentClass.getType());
 			}
 		}
 
@@ -531,7 +529,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 			if (currentClass == SymbolTable.NO_SYMBOL &&
 				currentMethod.getName().equals(SymbolTable.ENTRY_POINT))
 			{
-				reportError(validParameter.getLine(), "Main method cannot have any formal parameters");
+				reportError(validParameter.getLine(), "Main method cannot have any formal parameters!");
 			}
 
 			checkKeywords(validParameter.getLine(), validParameter.getName());
@@ -560,13 +558,13 @@ public class SemanticAnalyzer extends VisitorAdaptor
 				{
 					reportError(validParameter.getLine(),
 								"Invalid number of parameters in method '" + currentMethod.getName() +
-								"' in class '" + currentClass.getName() + "'");
+								"' in class '" + currentClass.getName() + "'.");
 				}
 				else if (parameter.getType() != baseParameter.getType())
 				{
 					reportError(validParameter.getLine(),
 								"Invalid parameter type in method '" + currentMethod.getName() +
-								"' in class '" + currentClass.getName() + "'");
+								"' in class '" + currentClass.getName() + "'.");
 				}
 			}
 		}
@@ -612,7 +610,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 
 		if (designator == SymbolTable.NO_SYMBOL)
 		{
-			reportError(designatorName.getLine(), "Name '" + designatorName.getName() + "' has not been declared");
+			reportError(designatorName.getLine(), "Name '" + designatorName.getName() + "' has not been declared!");
 		}
 
 		designatorName.symbol = designator;
@@ -631,7 +629,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 			if (member == null)
 			{
 				reportError(designatorChaining.getLine(),
-							"Name '" + designatorChaining.getChainedName() + "' is neither a method nor a field");
+							"Name '" + designatorChaining.getChainedName() + "' is neither a method nor a field!");
 
 				designatorChaining.symbol = SymbolTable.NO_SYMBOL;
 			}
@@ -642,7 +640,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 		}
 		else
 		{
-			reportError(designatorChaining.getLine(), "Invalid use of dot operator");
+			reportError(designatorChaining.getLine(), "Invalid use of dot operator!");
 			designatorChaining.symbol = SymbolTable.NO_SYMBOL;
 		}
 	}
@@ -656,7 +654,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 		{
 			if (designatorIndexing.getExpr().symbol.getType() != SymbolTable.INT_TYPE)
 			{
-				reportError(designatorIndexing.getLine(), "Index expression must be of integer type");
+				reportError(designatorIndexing.getLine(), "Index expression must be of integer type.");
 				designatorIndexing.symbol = SymbolTable.NO_SYMBOL;
 			}
 
@@ -664,7 +662,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 		}
 		else
 		{
-			reportError(designatorIndexing.getLine(), "Indexing non-array type");
+			reportError(designatorIndexing.getLine(), "Indexing non-array type!");
 			designatorIndexing.symbol = SymbolTable.NO_SYMBOL;
 		}
 	}
@@ -679,7 +677,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 			designator.getKind() != Symbol.FIELD)
 		{
 			reportError(designatorAssignment.getLine(),
-						"Value can only be assigned to variable, array element or class field");
+						"Value can only be assigned to variable, array element or class field.");
 		}
 		else
 		{
@@ -692,7 +690,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 
 				reportError(designatorAssignment.getLine(),
 							"Incompatible types in assignment statement (expected '" + expectedType +
-							"' but given '" + givenType + "')");
+							"' but given '" + givenType + "').");
 			}
 		}
 	}
@@ -707,12 +705,12 @@ public class SemanticAnalyzer extends VisitorAdaptor
 			designator.getKind() != Symbol.FIELD)
 		{
 			reportError(designatorIncrement.getLine(),
-						"Increment can only be applied to variable, array element or class field");
+						"Increment can only be applied to variable, array element or class field.");
 		}
 		else if (designator.getType() != SymbolTable.INT_TYPE)
 		{
 			reportError(designatorIncrement.getLine(),
-						"Increment can only be applied to integer type");
+						"Increment can only be applied to integer type!");
 		}
 	}
 
@@ -726,12 +724,12 @@ public class SemanticAnalyzer extends VisitorAdaptor
 			designator.getKind() != Symbol.FIELD)
 		{
 			reportError(designatorDecrement.getLine(),
-						"Decrement can only be applied to variable, array element or class field");
+						"Decrement can only be applied to variable, array element or class field.");
 		}
 		else if (designator.getType() != SymbolTable.INT_TYPE)
 		{
 			reportError(designatorDecrement.getLine(),
-						"Decrement can only be applied to integer type");
+						"Decrement can only be applied to integer type!");
 		}
 	}
 
@@ -742,7 +740,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 
 		if (calleeMethod.getKind() != Symbol.METHOD)
 		{
-			reportError(callee.getLine(), "Name '" + calleeMethod.getName() + "' is not a name of a method");
+			reportError(callee.getLine(), "Name '" + calleeMethod.getName() + "' is not a name of a method!");
 			calleeStack.push(new Callee(SymbolTable.NO_SYMBOL));
 		}
 		else
@@ -763,19 +761,19 @@ public class SemanticAnalyzer extends VisitorAdaptor
 
 		if (parameter == SymbolTable.NO_SYMBOL)
 		{
-			reportError(argument.getLine(), "Number of formal and actual parameters does not match");
+			reportError(argument.getLine(), "Number of formal and actual parameters does not match!");
 		}
 		else if (!argument.getExpr().symbol.getType().assignableTo(parameter.getType()))
 		{
 			reportError(argument.getLine(), "Type of actual parameter #" + argumentCount +
-											" is incompatible with corresponding formal parameter");
+											" is incompatible with corresponding formal parameter.");
 		}
 	}
 
 	@Override
 	public void visit(MethodCall methodCall)
 	{
-		int argumentCount = calleeStack.peek().argumentCount;
+		int argumentCount  = calleeStack.peek().argumentCount;
 		int parameterCount = calleeStack.peek().callee.getParameter();
 
 		if (parameterCount < 0)
@@ -785,7 +783,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 
 		if (argumentCount != parameterCount)
 		{
-			reportError(methodCall.getLine(), "Invalid number of arguments");
+			reportError(methodCall.getLine(), "Invalid number of arguments.");
 		}
 	}
 
@@ -798,11 +796,11 @@ public class SemanticAnalyzer extends VisitorAdaptor
 	{
 		if (currentMethod == SymbolTable.NO_SYMBOL)
 		{
-			reportError(returnStatement.getLine(), "Return statements are not allowed outside of method body");
+			reportError(returnStatement.getLine(), "Return statements are not allowed outside of method body.");
 		}
 		else if (currentMethodReturnType != SymbolTable.NO_TYPE)
 		{
-			reportError(returnStatement.getLine(), "Method must return a value");
+			reportError(returnStatement.getLine(), "Method must return a value.");
 		}
 	}
 
@@ -812,37 +810,37 @@ public class SemanticAnalyzer extends VisitorAdaptor
 		if (currentMethod == SymbolTable.NO_SYMBOL)
 		{
 			reportError(returnResultStatement.getLine(),
-						"Return statements are not allowed outside of method body");
+						"Return statements are not allowed outside of method body.");
 		}
 		else if (currentMethodReturnType == SymbolTable.NO_TYPE)
 		{
 			reportError(returnResultStatement.getLine(),
-						"Void method should not return an expression");
+						"Void method should not return an expression.");
 		}
 		else if (!returnResultStatement.getExpr().symbol.getType().assignableTo(currentMethodReturnType))
 		{
 			reportError(returnResultStatement.getLine(),
-						"Expression type in return statement is not assignable to the return type of surrounding method");
+						"Expression type in return statement is not assignable to the return type of surrounding method.");
 		}
 	}
 
 	@Override
 	public void visit(ReadStatement readStatement)
 	{
-		int kind = readStatement.getDesignator().symbol.getKind();
+		int kind  = readStatement.getDesignator().symbol.getKind();
 		Type type = readStatement.getDesignator().symbol.getType();
 
 		if (kind != Symbol.VARIABLE && kind != Symbol.ELEMENT && kind != Symbol.FIELD)
 		{
 			reportError(readStatement.getLine(),
-						"Value can only be read to variable, array element or class field");
+						"Value can only be read to variable, array element or class field.");
 		}
 		else if (type != SymbolTable.INT_TYPE &&
 				 type != SymbolTable.CHAR_TYPE &&
 				 type != SymbolTable.BOOL_TYPE)
 		{
 			reportError(readStatement.getLine(),
-						"Read argument should have one of predeclared types (int, char, bool)");
+						"Read argument should have one of predeclared types (int, char, bool).");
 		}
 	}
 
@@ -856,7 +854,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 			type != SymbolTable.BOOL_TYPE)
 		{
 			reportError(printStatement.getLine(),
-						"Print argument should have one of predeclared types (int, char, bool)");
+						"Print argument should have one of predeclared types (int, char, bool).");
 		}
 	}
 
@@ -877,7 +875,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 
 		if (term.getType() != SymbolTable.INT_TYPE)
 		{
-			reportError(negativeTermExpr.getLine(), "Only integer type can be negated");
+			reportError(negativeTermExpr.getLine(), "Only integer type can be negated!");
 		}
 
 		negativeTermExpr.symbol = term;
@@ -892,7 +890,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 		if (expr.getType() != SymbolTable.INT_TYPE ||
 			term.getType() != SymbolTable.INT_TYPE)
 		{
-			reportError(addopExpr.getLine(), "Addition/subtraction can only be done on integers");
+			reportError(addopExpr.getLine(), "Addition/subtraction can only be done on integers!");
 			addopExpr.symbol = SymbolTable.NO_SYMBOL;
 		}
 		else
@@ -913,10 +911,9 @@ public class SemanticAnalyzer extends VisitorAdaptor
 		Symbol term = mulopTerm.getTerm().symbol;
 		Symbol factor = mulopTerm.getFactor().symbol;
 
-		if (term.getType() != SymbolTable.INT_TYPE ||
-			factor.getType() != SymbolTable.INT_TYPE)
+		if (term.getType() != SymbolTable.INT_TYPE || factor.getType() != SymbolTable.INT_TYPE)
 		{
-			reportError(mulopTerm.getLine(), "Multiplication/division/modulus can only be done on integers");
+			reportError(mulopTerm.getLine(), "Multiplication/division/modulus can only be done on integers!");
 
 			mulopTerm.symbol = SymbolTable.NO_SYMBOL;
 		}
@@ -940,7 +937,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 		if (method.getType() == SymbolTable.NO_TYPE)
 		{
 			reportError(methodCallFactor.getLine(),
-						"Void method '" + method.getName() + "' cannot be used in expressions");
+						"Void method '" + method.getName() + "' cannot be used in expressions.");
 		}
 
 		methodCallFactor.symbol = method;
@@ -973,7 +970,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 		if (currentType.getKind() != Type.CLASS)
 		{
 			reportError(newScalarFactor.getLine(),
-						"Only concrete class objects can be dynamically allocated");
+						"Only concrete class objects can be dynamically allocated.");
 		}
 
 		newScalarFactor.symbol = getSymbolCopy(SymbolTable.NO_SYMBOL);
@@ -985,7 +982,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 	{
 		if (newVectorFactor.getExpr().symbol.getType() != SymbolTable.INT_TYPE)
 		{
-			reportError(newVectorFactor.getLine(), "Array size expression must result in an integer");
+			reportError(newVectorFactor.getLine(), "Array size expression must result in an integer.");
 		}
 
 		newVectorFactor.symbol = getSymbolCopy(SymbolTable.NO_SYMBOL);
@@ -1011,7 +1008,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 	@Override
 	public void visit(ExprRelation exprRelation)
 	{
-		Type left = exprRelation.getExpr().symbol.getType();
+		Type left  = exprRelation.getExpr().symbol.getType();
 		Type right = exprRelation.getExpr1().symbol.getType();
 
 		if (left.compatibleWith(right))
@@ -1023,13 +1020,13 @@ public class SemanticAnalyzer extends VisitorAdaptor
 				if (!(operation instanceof Equal) && !(operation instanceof NotEqual))
 				{
 					reportError(exprRelation.getLine(),
-								"Classes and arrays can only be compared for equality");
+								"Classes and arrays can only be compared for equality!");
 				}
 			}
 		}
 		else
 		{
-			reportError(exprRelation.getLine(), "Incompatible expression types");
+			reportError(exprRelation.getLine(), "Incompatible expression types.");
 		}
 
 		exprRelation.type = SymbolTable.BOOL_TYPE;
@@ -1059,7 +1056,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 		if (loopLevel == 0)
 		{
 			reportError(breakStatement.getLine(),
-						"Break statement is not allowed outside of loop body");
+						"Break statement is not allowed outside of a loop body!");
 		}
 	}
 
@@ -1069,7 +1066,7 @@ public class SemanticAnalyzer extends VisitorAdaptor
 		if (loopLevel == 0)
 		{
 			reportError(continueStatement.getLine(),
-						"Continue statement is not allowed outside of loop body");
+						"Continue statement is not allowed outside of a loop body!");
 		}
 	}
 }

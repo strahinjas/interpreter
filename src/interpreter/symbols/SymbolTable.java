@@ -34,7 +34,7 @@ public class SymbolTable
 		currentScope.addSymbol(new Symbol(Symbol.TYPE, "int", INT_TYPE));
 		currentScope.addSymbol(new Symbol(Symbol.TYPE, "char", CHAR_TYPE));
 		currentScope.addSymbol(new Symbol(Symbol.TYPE, "bool", BOOL_TYPE));
-		currentScope.addSymbol(new Symbol(Symbol.CONSTANT, "null", NULL_TYPE, 0));
+		currentScope.addSymbol(new Symbol(Symbol.CONSTANT, "null", NULL_TYPE, null));
 		currentScope.addSymbol(new Symbol(Symbol.CONSTANT, "eol", CHAR_TYPE, System.lineSeparator()));
 
 		Symbol method = new Symbol(Symbol.METHOD, "chr", CHAR_TYPE, null, 1);
@@ -46,7 +46,7 @@ public class SymbolTable
 			closeScope();
 		}
 
-		method = new Symbol(Symbol.METHOD, "ord", INT_TYPE);
+		method = new Symbol(Symbol.METHOD, "ord", INT_TYPE, null, 1);
 		currentScope.addSymbol(method);
 		{
 			openScope();
@@ -55,7 +55,7 @@ public class SymbolTable
 			closeScope();
 		}
 
-		method = new Symbol(Symbol.METHOD, "len", INT_TYPE);
+		method = new Symbol(Symbol.METHOD, "len", INT_TYPE, null, 1);
 		currentScope.addSymbol(method);
 		{
 			openScope();
@@ -231,7 +231,7 @@ public class SymbolTable
 				if (entry.getValue() == type)
 					return "array of " + getTypeName(entry.getKey());
 			}
-			return "array of notype";
+			return "array of no_type";
 		case Type.CLASS:
 			for (Map.Entry<String, Type> entry : classTypes.entrySet())
 			{
@@ -247,7 +247,7 @@ public class SymbolTable
 			}
 			return "abstract class";
 		default:
-			return "notype";
+			return "no_type";
 		}
 	}
 

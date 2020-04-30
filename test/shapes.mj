@@ -79,7 +79,7 @@ program Shapes
 		shapes = new Shape[size];
 
 		read(choice);
-		for (; choice != '.' && index < size;)
+		for (; index < size;)
 		{
 			if (choice == 'c' || choice == 'C')
 			{
@@ -115,6 +115,6 @@ program Shapes
 		}
 
 		print('O'); print(' '); print('='); print(' '); print(O); print(chr(10));
-		print('P'); print(' '); print('='); print(' '); print(P);
+		print('P'); print(' '); print('='); print(' '); print(P); print(eol);
 	}
 }

@@ -5,14 +5,17 @@ import interpreter.ir.Expression;
 import interpreter.ir.Statement;
 import interpreter.symbols.Symbol;
 import interpreter.symbols.SymbolTable;
+import interpreter.symbols.Type;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Stack;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.util.*;
 
 public class IntermediateCodeGenerator extends VisitorAdaptor
 {
+	private static final String ENTRY_POINT = "main";
+
 	private final SymbolTable symbolTable;
 
 	private final Stack<Expression> expressionStack = new Stack<>();
@@ -20,6 +23,7 @@ public class IntermediateCodeGenerator extends VisitorAdaptor
 
 	private Symbol method;
 
+	private String superClass;
 	private Symbol classSymbol;
 
 	private Statement.Program intermediateCode;
@@ -34,9 +38,43 @@ public class IntermediateCodeGenerator extends VisitorAdaptor
 		program.traverseBottomUp(this);
 	}
 
+	public Statement.Program getIntermediateCode()
+	{
+		return intermediateCode;
+	}
+
+	public void writeIRFile(String fileName) throws IOException
+	{
+		ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(fileName));
+
+		output.writeObject(intermediateCode);
+
+		output.close();
+	}
+
 	//////////////////////////////////////
 	//////////// HELPER METHODS //////////
 	//////////////////////////////////////
+
+	private Statement.Declaration.Type getVariableType(Type type)
+	{
+		if (type == SymbolTable.INT_TYPE)
+		{
+			return Statement.Declaration.Type.INTEGER;
+		}
+		else if (type == SymbolTable.CHAR_TYPE)
+		{
+			return Statement.Declaration.Type.CHARACTER;
+		}
+		else if (type == SymbolTable.BOOL_TYPE)
+		{
+			return Statement.Declaration.Type.BOOLEAN;
+		}
+		else
+		{
+			return Statement.Declaration.Type.REFERENCE;
+		}
+	}
 
 	private Expression.Binary.Operation getBinaryOperation(Object object)
 	{
@@ -48,14 +86,17 @@ public class IntermediateCodeGenerator extends VisitorAdaptor
 		return Expression.Binary.Operation.valueOf(className.replaceAll(regex, replacement).toUpperCase());
 	}
 
-	private void createClassStatement(int line, Statement.Class.Type type)
+	private void createClassStatement(int line)
 	{
 		String name = classSymbol.getName();
-		List<String> fields = new ArrayList<>();
+		List<Statement.Class.Field> fields = new ArrayList<>();
 
 		for (Symbol member : classSymbol.getType().getMembersCollection())
 		{
-			if (member.getKind() == Symbol.FIELD) fields.add(member.getName());
+			if (member.getKind() == Symbol.FIELD)
+			{
+				fields.add(new Statement.Class.Field(member.getName(), getVariableType(member.getType())));
+			}
 		}
 
 		List<Statement> statements = statementStack.pop();
@@ -68,7 +109,7 @@ public class IntermediateCodeGenerator extends VisitorAdaptor
 
 		symbolTable.exitScope();
 
-		statementStack.peek().add(new Statement.Class(line, name, type, fields, methods));
+		statementStack.peek().add(new Statement.Class(line, name, superClass, fields, methods));
 	}
 
 	private void createMethodStatement(int line)
@@ -81,10 +122,11 @@ public class IntermediateCodeGenerator extends VisitorAdaptor
 		}
 
 		LinkedList<Statement> body = statementStack.pop();
+		boolean isVoid = method.getType() == SymbolTable.NO_TYPE;
 
 		symbolTable.exitScope();
 
-		statementStack.peek().add(new Statement.Method(line, method.getName(), parameters, body));
+		statementStack.peek().add(new Statement.Method(line, isVoid, method.getName(), parameters, body));
 	}
 
 	//////////////////////////////////////
@@ -276,6 +318,16 @@ public class IntermediateCodeGenerator extends VisitorAdaptor
 
 		symbolTable.exitScope();
 		intermediateCode = new Statement.Program(line, statementStack.pop());
+
+		// call statement for main method to simulate
+		// an entry point for the program
+		Expression.Call mainCall = new Expression.Call(
+				line,
+				new Expression.Variable(line, ENTRY_POINT),
+				Collections.emptyList()
+		);
+
+		intermediateCode.statements.add(new Statement.Call(line, mainCall));
 	}
 
 	@Override
@@ -298,16 +350,16 @@ public class IntermediateCodeGenerator extends VisitorAdaptor
 	public void visit(ValidVar validVar)
 	{
 		int line = validVar.getLine();
-
 		Symbol symbol = symbolTable.findOnStack(validVar.getName());
-		statementStack.peek().add(new Statement.Variable(line, symbol.getName()));
+
+		statementStack.peek().add(new Statement.Declaration(line, getVariableType(symbol.getType()), symbol.getName()));
 	}
 
 	@Override
 	public void visit(ClassDecl classDecl)
 	{
 		int line = classDecl.getLine();
-		createClassStatement(line, Statement.Class.Type.CONCRETE);
+		createClassStatement(line);
 	}
 
 	@Override
@@ -320,10 +372,22 @@ public class IntermediateCodeGenerator extends VisitorAdaptor
 	}
 
 	@Override
+	public void visit(WithInheritance withInheritance)
+	{
+		superClass = withInheritance.getTypeName().getName();
+	}
+
+	@Override
+	public void visit(WithoutInheritance withoutInheritance)
+	{
+		superClass = null;
+	}
+
+	@Override
 	public void visit(AbstractClassDecl abstractClassDecl)
 	{
 		int line = abstractClassDecl.getLine();
-		createClassStatement(line, Statement.Class.Type.ABSTRACT);
+		createClassStatement(line);
 	}
 
 	@Override
@@ -365,6 +429,15 @@ public class IntermediateCodeGenerator extends VisitorAdaptor
 		Expression destination = expressionStack.pop();
 
 		statementStack.peek().add(new Statement.Assignment(line, destination, value));
+	}
+
+	@Override
+	public void visit(DesignatorMethodCall designatorMethodCall)
+	{
+		int line = designatorMethodCall.getLine();
+		Expression.Call expression = (Expression.Call) expressionStack.pop();
+
+		statementStack.peek().add(new Statement.Call(line, expression));
 	}
 
 	@Override
@@ -470,8 +543,9 @@ public class IntermediateCodeGenerator extends VisitorAdaptor
 	{
 		int line = readStatement.getLine();
 		Expression destination = expressionStack.pop();
+		Type symbolType = readStatement.getDesignator().symbol.getType();
 
-		statementStack.peek().add(new Statement.Read(line, destination));
+		statementStack.peek().add(new Statement.Read(line, getVariableType(symbolType), destination));
 	}
 
 	@Override
@@ -483,7 +557,9 @@ public class IntermediateCodeGenerator extends VisitorAdaptor
 		Integer width = null;
 
 		if (printStatement.getPrintWidth() instanceof Width)
+		{
 			width = ((Width) printStatement.getPrintWidth()).getValue();
+		}
 
 		statementStack.peek().add(new Statement.Print(line, expression, width));
 	}

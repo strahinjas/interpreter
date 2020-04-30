@@ -1,8 +1,9 @@
 package interpreter.ir;
 
+import java.io.Serializable;
 import java.util.List;
 
-public abstract class Statement
+public abstract class Statement implements Serializable
 {
 	public interface Visitor<R>
 	{
@@ -12,6 +13,7 @@ public abstract class Statement
 		R visit(Class statement);
 		R visit(Constant statement);
 		R visit(Control statement);
+		R visit(Declaration statement);
 		R visit(Decrement statement);
 		R visit(For statement);
 		R visit(If statement);
@@ -21,7 +23,6 @@ public abstract class Statement
 		R visit(Program statement);
 		R visit(Read statement);
 		R visit(Return statement);
-		R visit(Variable statement);
 	}
 
 	public int line;
@@ -33,7 +34,7 @@ public abstract class Statement
 
 	public abstract <R> R accept(Visitor<R> visitor);
 
-	public static class Assignment extends Statement
+	public static final class Assignment extends Statement
 	{
 		public final Expression destination;
 		public final Expression value;
@@ -52,7 +53,7 @@ public abstract class Statement
 		}
 	}
 
-	public static class Block extends Statement
+	public static final class Block extends Statement
 	{
 		public final List<Statement> statements;
 
@@ -69,7 +70,7 @@ public abstract class Statement
 		}
 	}
 
-	public static class Call extends Statement
+	public static final class Call extends Statement
 	{
 		public final Expression.Call expression;
 
@@ -86,20 +87,30 @@ public abstract class Statement
 		}
 	}
 
-	public static class Class extends Statement
+	public static final class Class extends Statement
 	{
-		public enum Type { ABSTRACT, CONCRETE }
+		public static final class Field implements Serializable
+		{
+			public final String name;
+			public final Declaration.Type type;
+
+			public Field(String name, Declaration.Type type)
+			{
+				this.name = name;
+				this.type = type;
+			}
+		}
 
 		public final String name;
-		public final Class.Type type;
-		public final List<String> fields;
+		public final String superClass;
+		public final List<Class.Field> fields;
 		public final List<Statement.Method> methods;
 
-		public Class(int line, String name, Class.Type type, List<String> fields, List<Statement.Method> methods)
+		public Class(int line, String name, String superClass, List<Class.Field> fields, List<Statement.Method> methods)
 		{
 			super(line);
 			this.name = name;
-			this.type = type;
+			this.superClass = superClass;
 			this.fields = fields;
 			this.methods = methods;
 		}
@@ -111,7 +122,7 @@ public abstract class Statement
 		}
 	}
 
-	public static class Constant extends Statement
+	public static final class Constant extends Statement
 	{
 		public final String name;
 		public final Object value;
@@ -130,7 +141,7 @@ public abstract class Statement
 		}
 	}
 
-	public static class Control extends Statement
+	public static final class Control extends Statement
 	{
 		public enum Type { BREAK, CONTINUE }
 
@@ -149,7 +160,34 @@ public abstract class Statement
 		}
 	}
 
-	public static class Decrement extends Statement
+	public static final class Declaration extends Statement
+	{
+		public enum Type
+		{
+			INTEGER,
+			CHARACTER,
+			BOOLEAN,
+			REFERENCE
+		}
+
+		public final Declaration.Type type;
+		public final String name;
+
+		public Declaration(int line, Declaration.Type type, String name)
+		{
+			super(line);
+			this.type = type;
+			this.name = name;
+		}
+
+		@Override
+		public <R> R accept(Visitor<R> visitor)
+		{
+			return visitor.visit(this);
+		}
+	}
+
+	public static final class Decrement extends Statement
 	{
 		public final Expression number;
 
@@ -166,7 +204,7 @@ public abstract class Statement
 		}
 	}
 
-	public static class For extends Statement
+	public static final class For extends Statement
 	{
 		public final Statement initializer;
 		public final Expression condition;
@@ -189,7 +227,7 @@ public abstract class Statement
 		}
 	}
 
-	public static class If extends Statement
+	public static final class If extends Statement
 	{
 		public final Expression condition;
 		public final Statement thenBranch;
@@ -210,7 +248,7 @@ public abstract class Statement
 		}
 	}
 
-	public static class Increment extends Statement
+	public static final class Increment extends Statement
 	{
 		public final Expression number;
 
@@ -227,15 +265,17 @@ public abstract class Statement
 		}
 	}
 
-	public static class Method extends Statement
+	public static final class Method extends Statement
 	{
+		public final boolean isVoid;
 		public final String name;
 		public final List<String> parameters;
 		public final List<Statement> body;
 
-		public Method(int line, String name, List<String> parameters, List<Statement> body)
+		public Method(int line, boolean isVoid, String name, List<String> parameters, List<Statement> body)
 		{
 			super(line);
+			this.isVoid = isVoid;
 			this.name = name;
 			this.parameters = parameters;
 			this.body = body;
@@ -248,7 +288,7 @@ public abstract class Statement
 		}
 	}
 
-	public static class Print extends Statement
+	public static final class Print extends Statement
 	{
 		public final Expression expression;
 		public final Integer width;
@@ -267,7 +307,7 @@ public abstract class Statement
 		}
 	}
 
-	public static class Program extends Statement
+	public static final class Program extends Statement
 	{
 		public final List<Statement> statements;
 
@@ -284,13 +324,15 @@ public abstract class Statement
 		}
 	}
 
-	public static class Read extends Statement
+	public static final class Read extends Statement
 	{
+		public final Declaration.Type type;
 		public final Expression destination;
 
-		public Read(int line, Expression destination)
+		public Read(int line, Declaration.Type type, Expression destination)
 		{
 			super(line);
+			this.type = type;
 			this.destination = destination;
 		}
 
@@ -301,7 +343,7 @@ public abstract class Statement
 		}
 	}
 
-	public static class Return extends Statement
+	public static final class Return extends Statement
 	{
 		public final Expression value;
 
@@ -309,23 +351,6 @@ public abstract class Statement
 		{
 			super(line);
 			this.value = value;
-		}
-
-		@Override
-		public <R> R accept(Visitor<R> visitor)
-		{
-			return visitor.visit(this);
-		}
-	}
-
-	public static class Variable extends Statement
-	{
-		public final String name;
-
-		public Variable(int line, String name)
-		{
-			super(line);
-			this.name = name;
 		}
 
 		@Override

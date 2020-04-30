@@ -580,6 +580,6 @@ Addop ::=
 Mulop ::=
 	(Multiplication) MUL
 	|
-	(Divison) DIV
+	(Division) DIV
 	|
 	(Modulus) MOD;

@@ -1,8 +1,9 @@
 package interpreter.ir;
 
+import java.io.Serializable;
 import java.util.List;
 
-public abstract class Expression
+public abstract class Expression implements Serializable
 {
 	public interface Visitor<R>
 	{
@@ -27,7 +28,7 @@ public abstract class Expression
 
 	public abstract <R> R accept(Visitor<R> visitor);
 
-	public static class Binary extends Expression
+	public static final class Binary extends Expression
 	{
 		public enum Operation
 		{
@@ -63,7 +64,7 @@ public abstract class Expression
 		}
 	}
 
-	public static class Call extends Expression
+	public static final class Call extends Expression
 	{
 		public final Expression callee;
 		public final List<Expression> arguments;
@@ -82,7 +83,7 @@ public abstract class Expression
 		}
 	}
 
-	public static class Group extends Expression
+	public static final class Group extends Expression
 	{
 		public final Expression expression;
 
@@ -99,7 +100,7 @@ public abstract class Expression
 		}
 	}
 
-	public static class Index extends Expression
+	public static final class Index extends Expression
 	{
 		public final Expression array;
 		public final Expression index;
@@ -118,7 +119,7 @@ public abstract class Expression
 		}
 	}
 
-	public static class Literal extends Expression
+	public static final class Literal extends Expression
 	{
 		public final Object value;
 
@@ -135,7 +136,7 @@ public abstract class Expression
 		}
 	}
 
-	public static class Logical extends Expression
+	public static final class Logical extends Expression
 	{
 		public enum Operation { AND, OR }
 
@@ -158,7 +159,7 @@ public abstract class Expression
 		}
 	}
 
-	public static class New extends Expression
+	public static final class New extends Expression
 	{
 		public final String type;
 		public final Expression size;
@@ -177,7 +178,7 @@ public abstract class Expression
 		}
 	}
 
-	public static class Property extends Expression
+	public static final class Property extends Expression
 	{
 		public final Expression object;
 		public final String name;
@@ -196,7 +197,7 @@ public abstract class Expression
 		}
 	}
 
-	public static class Unary extends Expression
+	public static final class Unary extends Expression
 	{
 		public enum Operation { NEGATION }
 
@@ -217,7 +218,7 @@ public abstract class Expression
 		}
 	}
 
-	public static class Variable extends Expression
+	public static final class Variable extends Expression
 	{
 		public final String name;
 
