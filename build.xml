@@ -22,6 +22,12 @@
 		</delete>
 	</target>
 
+	<target name="deleteIROutput">
+		<delete>
+			<fileset dir="test" includes="*.ir"/>
+		</delete>
+	</target>
+
 	<target name="generateParser" depends="delete">
 		<java jar="lib/CUP.jar" fork="true">
 			<arg value="-destdir"/>
