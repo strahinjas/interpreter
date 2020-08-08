@@ -98,53 +98,52 @@ public class Main
 
 			symbolTable.dump();
 
-			if (analyzer.isSemanticallyCorrect())
+			if (!analyzer.isSemanticallyCorrect())
 			{
-				System.out.println("================== Intermediate Code Generation =====================");
+				System.err.println("Semantic error! Interpretation cannot continue!");
+				return;
+			}
+
+			System.out.println("================== Intermediate Code Generation =====================");
+			System.out.println();
+
+			IntermediateCodeGenerator generator = new IntermediateCodeGenerator(symbolTable);
+
+			generator.generate(program);
+
+			System.out.println("Intermediate code successfully generated.");
+			System.out.println("Writing intermediate code to file '" + outputFileName + "'...");
+
+			generator.writeIRFile(outputFileName);
+
+			System.out.println("Finished writing IR file.");
+			System.out.println();
+
+			if (toInterpret)
+			{
+				System.out.println("========================= Interpretation ============================");
 				System.out.println();
 
-				IntermediateCodeGenerator generator = new IntermediateCodeGenerator(symbolTable);
+				Interpreter interpreter = new Interpreter();
 
-				generator.generate(program);
-
-				System.out.println("Intermediate code successfully generated.");
-				System.out.println("Writing intermediate code to file '" + outputFileName + "'...");
-
-				generator.writeIRFile(outputFileName);
-
-				System.out.println("Finished writing IR file.");
-				System.out.println();
-
-				if (toInterpret)
+				try
 				{
-					System.out.println("========================= Interpretation ============================");
+					interpreter.interpret(generator.getIntermediateCode());
+
 					System.out.println();
-
-					Interpreter interpreter = new Interpreter();
-
-					try
-					{
-						interpreter.interpret(generator.getIntermediateCode());
-
-						System.out.println();
-						System.out.println("Interpretation finished successfully!");
-					}
-					catch (InterpretingException exception)
-					{
-						System.err.println();
-						System.err.println(exception.getMessage());
-						System.err.println("Interpretation aborted with an error!");
-					}
+					System.out.println("Interpretation finished successfully!");
 				}
-				else
+				catch (InterpretingException exception)
 				{
-					System.out.println("Interpretation omitted.");
-					System.out.println("Generated IR file can be interpreted afterwards by passing it as a parameter to the Interpreter application.");
+					System.err.println();
+					System.err.println(exception.getMessage());
+					System.err.println("Interpretation aborted with an error!");
 				}
 			}
 			else
 			{
-				System.err.println("Semantic error! Interpretation cannot continue!");
+				System.out.println("Interpretation omitted.");
+				System.out.println("Generated IR file can be interpreted afterwards by passing it as a parameter to the Interpreter application.");
 			}
 		}
 		finally
