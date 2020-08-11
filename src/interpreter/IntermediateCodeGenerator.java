@@ -319,8 +319,8 @@ public class IntermediateCodeGenerator extends VisitorAdaptor
 		symbolTable.exitScope();
 		intermediateCode = new Statement.Program(line, statementStack.pop());
 
-		// call statement for main method to simulate
-		// an entry point for the program
+		// call to main method which simulates
+		// an entry point of the program
 		Expression.Call mainCall = new Expression.Call(
 				line,
 				new Expression.Variable(line, ENTRY_POINT),
